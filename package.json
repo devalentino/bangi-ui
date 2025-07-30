@@ -1,0 +1,19 @@
+{
+  "name": "bangi-ui",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "esbuild index.js --bundle --outfile=bin/main.js --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "mithril": "^2.3.3"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.8"
+  }
+}
