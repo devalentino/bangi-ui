@@ -3,7 +3,7 @@ var m = require("mithril");
 var auth = require("./src/models/auth");
 var AuthenticatedPage = require("./src/components/authenticated_page");
 var authView = require("./src/views/auth");
-var statistics = require("./src/views/statistics");
+var statisticsView = require("./src/views/statistics");
 
 m.route(document.getElementById("content"), "/statistics", {
   "/sign-in": {
@@ -23,7 +23,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: statistics.Statistics });
+      return m(AuthenticatedPage, { page: statisticsView });
     },
   },
 });
