@@ -2,6 +2,7 @@ var m = require("mithril");
 var config = require("../config");
 var auth = require("../models/auth");
 var statistics = require("../models/statistics");
+var ChartComponent = require("../components/chart");
 
 var filterAvailableCampaigns = [];
 
@@ -98,6 +99,52 @@ var Filter = {
   },
 };
 
+var Chart = {
+  view: function () {
+    var days = [];
+    var clicks = [];
+
+    for (const key in statistics.Statistics.report) {
+      if (statistics.Statistics.report.hasOwnProperty(key)) {
+        days.push(key);
+        clicks.push(statistics.Statistics.report[key]["clicks"]);
+      }
+    }
+
+    var myChartOptions = {
+      type: "line",
+      data: {
+        labels: days,
+        datasets: [
+          {
+            label: "Clicks",
+            data: clicks,
+            backgroundColor: "rgba(0, 156, 255, .5)",
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+      },
+    };
+
+    return m(
+      "div.container-fluid.pt-4.px-4",
+      m(
+        "div.row.g-4",
+        m(
+          "div.col-12",
+          m("div.bg-light.rounded.h-100.p-4", [
+            m("h6.mb-4", "Multiple Line Chart"),
+            m(ChartComponent, { chartOptions: myChartOptions }),
+          ]),
+        ),
+      ),
+    );
+  },
+};
+
 var Table = {
   _build_trs: function (report) {
     var trs = [];
@@ -154,4 +201,4 @@ var Table = {
   },
 };
 
-module.exports = { Filter, Chart: Table };
+module.exports = { Chart, Filter, Table };
