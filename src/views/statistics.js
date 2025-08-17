@@ -111,7 +111,7 @@ var Chart = {
       }
     }
 
-    var myChartOptions = {
+    var chartOptions = {
       type: "line",
       data: {
         labels: days,
@@ -137,7 +137,7 @@ var Chart = {
           "div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
             m("h6.mb-4", "Statistics Chart"),
-            m(ChartComponent, { chartOptions: myChartOptions }),
+            m(ChartComponent, { chartOptions }),
           ]),
         ),
       ),
