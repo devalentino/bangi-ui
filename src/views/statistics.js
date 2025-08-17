@@ -99,6 +99,8 @@ var Filter = {
 
 var Chart = {
   view: function () {
+    if (statisticsModel.report === null) return;
+
     var days = [];
     var clicks = [];
 
@@ -134,7 +136,7 @@ var Chart = {
         m(
           "div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
-            m("h6.mb-4", "Multiple Line Chart"),
+            m("h6.mb-4", "Statistics Chart"),
             m(ChartComponent, { chartOptions: myChartOptions }),
           ]),
         ),
@@ -174,7 +176,7 @@ var Table = {
         m(
           "div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
-            m("h6.mb-4", "Statistics"),
+            m("h6.mb-4", "Statistics Table"),
             m(
               "div.table-responsive",
               m("table.table", [

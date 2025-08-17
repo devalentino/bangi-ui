@@ -1,8 +1,8 @@
 var m = require("mithril");
 var auth = require("../../src/models/auth");
 
-var username = "admin";
-var password = "S1gbllOKlqfVuEZe9W2PXetWd";
+var username = null;
+var password = null;
 
 var SignIn = {
   view: function () {
