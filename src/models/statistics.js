@@ -45,4 +45,4 @@ var Statistics = {
   },
 };
 
-module.exports = { Statistics };
+module.exports = Statistics;

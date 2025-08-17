@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "esbuild index.js --bundle --outfile=bin/main.js",
     "start": "esbuild index.js --bundle --outfile=bin/main.js --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "chart.js": "^4.5.0",
     "mithril": "^2.3.3"
   },
   "devDependencies": {
