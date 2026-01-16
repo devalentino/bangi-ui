@@ -59,7 +59,7 @@ var Authentication = {
 
     m.request({
       method: "POST",
-      url: "http://i-cosanzeana.me/api/v2/auth/authenticate",
+      url: `${process.env.BACKEND_API_BASE_URL}/auth/authenticate`,
       headers: { Authorization: `Basic ${Authentication.token}` },
     })
       .then(function (result) {

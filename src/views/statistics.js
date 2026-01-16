@@ -1,5 +1,4 @@
 var m = require("mithril");
-var config = require("../config");
 var auth = require("../models/auth");
 var statisticsModel = require("../models/statistics");
 var ChartComponent = require("../components/chart");
@@ -20,7 +19,7 @@ var Filter = {
   oninit: function () {
     m.request({
       method: "GET",
-      url: `${config.BACKEND_API_BASE_URL}/core/campaigns`,
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
     }).then(function (payload) {
       filterAvailableCampaigns = payload;

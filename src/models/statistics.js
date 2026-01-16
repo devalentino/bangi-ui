@@ -1,5 +1,4 @@
 const m = require("mithril");
-const config = require("../config");
 const auth = require("./auth");
 
 var Filter = {
@@ -31,7 +30,7 @@ var Statistics = {
 
     m.request({
       method: "GET",
-      url: `${config.BACKEND_API_BASE_URL}/reports/base`,
+      url: `${process.env.BACKEND_API_BASE_URL}/reports/base`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
       params: {
         period_start: Statistics.filter.periodStart(),
