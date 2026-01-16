@@ -22,7 +22,7 @@ var Filter = {
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
     }).then(function (payload) {
-      filterAvailableCampaigns = payload;
+      filterAvailableCampaigns = payload["content"];
 
       if (filterAvailableCampaigns.length > 0) {
         statisticsModel.filter.campaign_id = filterAvailableCampaigns[0].id;
