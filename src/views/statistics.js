@@ -5,6 +5,23 @@ var ChartComponent = require("../components/chart");
 
 var filterAvailableCampaigns = [];
 
+function formatDate(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function setDefaultDateRange() {
+  if (statisticsModel.filter.from && statisticsModel.filter.to) {
+    return;
+  }
+
+  var today = new Date();
+  var fromDate = new Date(today);
+  fromDate.setDate(today.getDate() - 6);
+
+  statisticsModel.filter.from = formatDate(fromDate);
+  statisticsModel.filter.to = formatDate(today);
+}
+
 function getLeadsCount(row, status) {
   if (row.hasOwnProperty("leads")) {
     if (row.leads.hasOwnProperty(status)) {
@@ -17,6 +34,8 @@ function getLeadsCount(row, status) {
 
 var Filter = {
   oninit: function () {
+    setDefaultDateRange();
+
     m.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
@@ -26,6 +45,7 @@ var Filter = {
 
       if (filterAvailableCampaigns.length > 0) {
         statisticsModel.filter.campaign_id = filterAvailableCampaigns[0].id;
+        statisticsModel.fetch();
       }
     });
   },
@@ -42,6 +62,7 @@ var Filter = {
             ),
             m("input.form-control", {
               type: "date",
+              value: statisticsModel.filter.from || "",
               oninput: function (event) {
                 statisticsModel.filter.from = event.target.value;
                 statisticsModel.fetch();
@@ -58,6 +79,7 @@ var Filter = {
             ),
             m("input.form-control", {
               type: "date",
+              value: statisticsModel.filter.to || "",
               oninput: function (event) {
                 statisticsModel.filter.to = event.target.value;
                 statisticsModel.fetch();
