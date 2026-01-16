@@ -44,7 +44,7 @@ var Filter = {
       filterAvailableCampaigns = payload["content"];
 
       if (filterAvailableCampaigns.length > 0) {
-        statisticsModel.filter.campaign_id = filterAvailableCampaigns[0].id;
+        statisticsModel.filter.campaignId = filterAvailableCampaigns[0].id;
         statisticsModel.fetch();
       }
     });
@@ -54,7 +54,7 @@ var Filter = {
       ".container-fluid.pt-4.px-4",
       m(".row.g-4", [
         m(
-          ".col-sm-12.col-md-6.col-xl-4",
+          ".col-sm-12.col-md-6.col-xl-3",
           m(".h-100.bg-light.rounded.p-4", [
             m(
               ".d-flex.align-items-center.justify-content-between.mb-4",
@@ -71,7 +71,7 @@ var Filter = {
           ]),
         ),
         m(
-          ".col-sm-12.col-md-6.col-xl-4",
+          ".col-sm-12.col-md-6.col-xl-3",
           m(".h-100.bg-light.rounded.p-4", [
             m(
               ".d-flex.align-items-center.justify-content-between.mb-4",
@@ -88,7 +88,7 @@ var Filter = {
           ]),
         ),
         m(
-          ".col-sm-12.col-md-6.col-xl-4",
+          ".col-sm-12.col-md-6.col-xl-3",
           m(".h-100.bg-light.rounded.p-4", [
             m(
               ".d-flex.align-items-center.justify-content-between.mb-4",
@@ -101,14 +101,49 @@ var Filter = {
                 {
                   "aria-label": "Campaign",
                   oninput: function (event) {
-                    statisticsModel.filter.campaign_id = event.target.value;
+                    statisticsModel.filter.campaignId = event.target.value;
                     statisticsModel.fetch();
                   },
-                  value: statisticsModel.filter.campaign_id,
+                  value: statisticsModel.filter.campaignId,
                 },
                 filterAvailableCampaigns.map(function (campaign) {
                   return m("option", { value: campaign.id }, campaign.name);
                 }),
+              ),
+            ),
+          ]),
+        ),
+        m(
+          ".col-sm-12.col-md-6.col-xl-3",
+          m(".h-100.bg-light.rounded.p-4", [
+            m(
+              ".d-flex.align-items-center.justify-content-between.mb-4",
+              m("h6.mb-0", "Group By"),
+            ),
+            m(
+              ".d-flex.mb-2",
+              m(
+                "select.form-select.mb-3",
+                {
+                  "aria-label": "Group By",
+                  disabled: statisticsModel.parameters === null,
+                  oninput: function (event) {
+                    statisticsModel.filter.groupBy = event.target.value || null;
+                    statisticsModel.fetch();
+                  },
+                  value: statisticsModel.filter.groupBy || "",
+                },
+                [
+                  m("option", { value: "" }, "Select group"),
+                ].concat(
+                  (statisticsModel.parameters || []).map(function (parameter) {
+                    return m(
+                      "option",
+                      { value: parameter },
+                      parameter,
+                    );
+                  }),
+                ),
               ),
             ),
           ]),

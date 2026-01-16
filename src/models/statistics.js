@@ -1,14 +1,15 @@
 const m = require("mithril");
 const auth = require("./auth");
 
-var Filter = {
+var   Filter = {
   from: null,
   to: null,
-  campaign_id: null,
+  campaignId: null,
+  groupBy: null,
 
   isReady: function () {
     return (
-      Filter.from !== null && Filter.to !== null && Filter.campaign_id !== null
+      Filter.from !== null && Filter.to !== null && Filter.campaignId !== null
     );
   },
   periodStart: function () {
@@ -28,15 +29,21 @@ var Statistics = {
       return;
     }
 
+    var parameters = {
+      periodStart: Statistics.filter.periodStart(),
+      periodEnd: Statistics.filter.periodEnd(),
+      campaignId: Statistics.filter.campaignId,
+    }
+
+    if (Statistics.filter.groupBy) {
+      parameters.groupBy = Statistics.filter.groupBy;
+    }
+
     m.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/reports/base`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
-      params: {
-        period_start: Statistics.filter.periodStart(),
-        period_end: Statistics.filter.periodEnd(),
-        campaign_id: Statistics.filter.campaign_id,
-      },
+      params: parameters,
     }).then(function (payload) {
       Statistics.report = payload["content"]["report"];
       Statistics.parameters = payload["content"]["parameters"];
