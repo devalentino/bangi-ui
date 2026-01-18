@@ -1,9 +1,9 @@
-var m = require("mithril");
-var auth = require("../models/auth");
-var statisticsModel = require("../models/statistics");
-var ChartComponent = require("../components/chart");
+let m = require("mithril");
+let auth = require("../models/auth");
+let statisticsModel = require("../models/statistics");
+let ChartComponent = require("../components/chart");
 
-var filterAvailableCampaigns = [];
+let filterAvailableCampaigns = [];
 
 function formatDate(date) {
   return date.toISOString().slice(0, 10);
@@ -14,8 +14,8 @@ function setDefaultDateRange() {
     return;
   }
 
-  var today = new Date();
-  var fromDate = new Date(today);
+  let today = new Date();
+  let fromDate = new Date(today);
   fromDate.setDate(today.getDate() - 6);
 
   statisticsModel.filter.from = formatDate(fromDate);
@@ -32,14 +32,14 @@ function getLeadsCount(row, status) {
   return 0;
 }
 
-var Filter = {
+const Filter = {
   oninit: function () {
     setDefaultDateRange();
 
     m.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
-      headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      headers: {Authorization: `Basic ${auth.Authentication.token}`},
     }).then(function (payload) {
       filterAvailableCampaigns = payload["content"];
 
@@ -107,7 +107,7 @@ var Filter = {
                   value: statisticsModel.filter.campaignId,
                 },
                 filterAvailableCampaigns.map(function (campaign) {
-                  return m("option", { value: campaign.id }, campaign.name);
+                  return m("option", {value: campaign.id}, campaign.name);
                 }),
               ),
             ),
@@ -134,12 +134,12 @@ var Filter = {
                   value: statisticsModel.filter.groupBy || "",
                 },
                 [
-                  m("option", { value: "" }, "Select group"),
+                  m("option", {value: ""}, "Select group"),
                 ].concat(
                   (statisticsModel.parameters || []).map(function (parameter) {
                     return m(
                       "option",
-                      { value: parameter },
+                      {value: parameter},
                       parameter,
                     );
                   }),
@@ -153,32 +153,105 @@ var Filter = {
   },
 };
 
-var Chart = {
-  view: function () {
-    if (statisticsModel.report === null) return;
+const Chart = {
+  _getGroupByKeys(report) {
+    let keys = [];
 
-    var days = [];
-    var clicks = [];
+    report.forEach(function (row) {
+      Object.keys(row).filter(function (key) {
+        return !["date", "clicks", "leads", "lead_status"].includes(key);
+      }).forEach(function (key) {
+        if (!keys.includes(key)) {
+          keys.push(key);
+        }
+      });
+    });
 
-    for (const key in statisticsModel.report) {
-      if (statisticsModel.report.hasOwnProperty(key)) {
-        days.push(key);
-        clicks.push(statisticsModel.report[key]["clicks"]);
+    return keys;
+  },
+
+  _getGroupByValues(report, groupByKeys) {
+    let groupByValues = [];
+
+    report.forEach(function (row) {
+      groupByKeys.forEach(function (groupByKey) {
+        if (!groupByValues.includes(row[groupByKey])) {
+          groupByValues.push(row[groupByKey]);
+        }
+      });
+    });
+
+    return groupByValues;
+  },
+
+  _getDays: function (report) {
+    let days = [];
+
+    report.forEach(function (row) {
+      if (!days.includes(row.date)) {
+        days.push(row.date)
+      }
+    });
+
+    return days;
+  },
+
+  _getClicksFromReport(report, groupByValue, groupByKeys, date) {
+    let clicks = 0;
+
+    for (const groupByKey of groupByKeys) {
+      for (const row of report) {
+        if (row.date !== date) continue;
+
+        if (row.hasOwnProperty(groupByKey) && row[groupByKey] === groupByValue) {
+          clicks += row.clicks;
+        }
       }
     }
 
-    var chartOptions = {
+    return clicks;
+  },
+
+  _getDatasets(report, dates) {
+    let groupByKeys = Chart._getGroupByKeys(report);
+    let groupByValues = Chart._getGroupByValues(report, groupByKeys);
+    let datasets = Object.fromEntries(
+      groupByValues.map(function (groupByValue) {
+        return [groupByValue, []];
+      })
+    );
+
+    for (const date of dates) {
+      for (const groupByValue of groupByValues) {
+        datasets[groupByValue].push(
+          Chart._getClicksFromReport(report, groupByValue, groupByKeys, date)
+        );
+      }
+    }
+
+    return datasets;
+  },
+
+  view: function () {
+    if (statisticsModel.report === null) return;
+
+    let dates = Chart._getDays(statisticsModel.report);
+    let datasets = Chart._getDatasets(statisticsModel.report, dates);
+
+    datasets = Object.keys(datasets).map(function (groupByValue) {
+      return {
+        label: groupByValue,
+        data: datasets[groupByValue],
+        backgroundColor: "rgba(0, 156, 255, .5)",
+        fill: true,
+      };
+    });
+
+    const chartOptions = {
       type: "line",
       data: {
-        labels: days,
-        datasets: [
-          {
-            label: "Clicks",
-            data: clicks,
-            backgroundColor: "rgba(0, 156, 255, .5)",
-            fill: true,
-          },
-        ],
+        labels: dates,
+        datasets: datasets,
       },
       options: {
         responsive: true,
@@ -193,7 +266,7 @@ var Chart = {
           "div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
             m("h6.mb-4", "Statistics Chart"),
-            m(ChartComponent, { chartOptions }),
+            m(ChartComponent, {chartOptions}),
           ]),
         ),
       ),
@@ -201,25 +274,21 @@ var Chart = {
   },
 };
 
-var Table = {
+const Table = {
   _build_trs: function (report) {
-    var trs = [];
-    for (const key in report) {
-      if (report.hasOwnProperty(key)) {
-        var row = report[key];
-
-        trs.push(
-          m("tr", [
-            m("td", key), // date
-            m("td", row.clicks),
-            m("td", getLeadsCount(row, "expect")),
-            m("td", getLeadsCount(row, "accept")),
-            m("td", getLeadsCount(row, "reject")),
-            m("td", getLeadsCount(row, "trash")),
-          ]),
-        );
-      }
-    }
+    let trs = [];
+    report.forEach(function (row) {
+      trs.push(
+        m("tr", [
+          m("td", row.date), // date
+          m("td", row.clicks),
+          m("td", getLeadsCount(row, "expect")),
+          m("td", getLeadsCount(row, "accept")),
+          m("td", getLeadsCount(row, "reject")),
+          m("td", getLeadsCount(row, "trash")),
+        ]),
+      );
+    });
     return trs;
   },
   view: function () {
@@ -239,12 +308,12 @@ var Table = {
                 m(
                   "thead",
                   m("tr", [
-                    m("th", { scope: "col" }, "Date"),
-                    m("th", { scope: "col" }, "Clicks"),
-                    m("th", { scope: "col" }, "Expect"),
-                    m("th", { scope: "col" }, "Accept"),
-                    m("th", { scope: "col" }, "Reject"),
-                    m("th", { scope: "col" }, "Trash"),
+                    m("th", {scope: "col"}, "Date"),
+                    m("th", {scope: "col"}, "Clicks"),
+                    m("th", {scope: "col"}, "Expect"),
+                    m("th", {scope: "col"}, "Accept"),
+                    m("th", {scope: "col"}, "Reject"),
+                    m("th", {scope: "col"}, "Trash"),
                   ]),
                 ),
                 m("tbody", Table._build_trs(statisticsModel.report)),
@@ -257,7 +326,7 @@ var Table = {
   },
 };
 
-var Statistics = {
+const Statistics = {
   view: function () {
     return [m(Filter), m(Chart), m(Table)];
   },

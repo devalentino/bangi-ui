@@ -23,7 +23,6 @@ var   Filter = {
 var Statistics = {
   filter: Filter,
   report: null,
-  parameters: null,
   fetch: function () {
     if (!Statistics.filter.isReady()) {
       return;
@@ -36,7 +35,7 @@ var Statistics = {
     }
 
     if (Statistics.filter.groupBy) {
-      parameters.groupBy = Statistics.filter.groupBy;
+      parameters.groupParameters = Statistics.filter.groupBy;
     }
 
     m.request({
