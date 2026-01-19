@@ -175,7 +175,7 @@ const Chart = {
 
     report.forEach(function (row) {
       groupByKeys.forEach(function (groupByKey) {
-        if (!groupByValues.includes(row[groupByKey])) {
+        if (row[groupByKey] && !groupByValues.includes(row[groupByKey])) {
           groupByValues.push(row[groupByKey]);
         }
       });
