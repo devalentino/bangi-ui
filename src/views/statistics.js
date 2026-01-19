@@ -2,6 +2,7 @@ let m = require("mithril");
 let auth = require("../models/auth");
 let statisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
+let colour = require("../utils/colour");
 
 let filterAvailableCampaigns = [];
 
@@ -199,12 +200,20 @@ const Chart = {
   _getClicksFromReport(report, groupByValue, groupByKeys, date) {
     let clicks = 0;
 
-    for (const groupByKey of groupByKeys) {
+    if (groupByValue === 'Total') {
       for (const row of report) {
         if (row.date !== date) continue;
 
-        if (row.hasOwnProperty(groupByKey) && row[groupByKey] === groupByValue) {
-          clicks += row.clicks;
+        clicks += row.clicks;
+      }
+    } else {
+      for (const groupByKey of groupByKeys) {
+        for (const row of report) {
+          if (row.date !== date) continue;
+
+          if (row.hasOwnProperty(groupByKey) && row[groupByKey] === groupByValue) {
+            clicks += row.clicks;
+          }
         }
       }
     }
@@ -220,6 +229,11 @@ const Chart = {
         return [groupByValue, []];
       })
     );
+
+    if (Object.keys(datasets).length === 0) {
+      datasets = {'Total': []};
+      groupByValues = ['Total'];
+    }
 
     for (const date of dates) {
       for (const groupByValue of groupByValues) {
@@ -242,8 +256,9 @@ const Chart = {
       return {
         label: groupByValue,
         data: datasets[groupByValue],
-        backgroundColor: "rgba(0, 156, 255, .5)",
-        fill: true,
+        borderColor: colour.randomColourShade("blue"),
+        fill: false,
+        cubicInterpolationMode: 'monotone',
       };
     });
 
@@ -255,6 +270,12 @@ const Chart = {
       },
       options: {
         responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Clicks Count'
+          },
+        },
       },
     };
 
