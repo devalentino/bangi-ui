@@ -1,31 +1,33 @@
 var m = require("mithril");
 var ChartJS = require("chart.js/auto");
 
-var Chart = {
-  chartInstance: null,
+function Chart() {
+  this.chartInstance = null;
 
-  oncreate: function ({ dom, attrs }) {
+  this.oncreate = function ({ dom, attrs }) {
     const ctx = dom.getContext("2d");
-    Chart.chartInstance = new ChartJS(ctx, attrs.chartOptions);
-  },
+    this.chartInstance = new ChartJS(ctx, attrs.chartOptions);
+  };
 
-  onupdate: function ({ attrs }) {
-    if (Chart.chartInstance) {
-      Chart.chartInstance.data = attrs.chartOptions.data;
-      Chart.chartInstance.options = attrs.chartOptions.options;
-      Chart.chartInstance.update();
+  this.onupdate = function ({ attrs }) {
+    if (this.chartInstance) {
+      this.chartInstance.data = attrs.chartOptions.data;
+      this.chartInstance.options = attrs.chartOptions.options;
+      this.chartInstance.update();
     }
-  },
+  };
 
-  onremove: function () {
-    if (Chart.chartInstance) {
-      Chart.chartInstance.destroy();
+  this.onremove = function () {
+    if (this.chartInstance) {
+      this.chartInstance.destroy();
     }
-  },
+  };
 
-  view: function () {
+  this.view = function () {
     return m("canvas");
-  },
+  };
+
+  return this;
 };
 
 module.exports = Chart;

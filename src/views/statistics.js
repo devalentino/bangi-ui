@@ -221,7 +221,33 @@ const Chart = {
     return clicks;
   },
 
-  _getDatasets(report, dates) {
+  _getLeadsFromReport(report, groupByValue, groupByKeys, date) {
+    let leads = 0;
+
+    if (groupByValue === 'Total') {
+      for (const row of report) {
+        if (row.date !== date) continue;
+
+        if (row.hasOwnProperty("leads")) {
+          leads += row.leads;
+        }
+      }
+    } else {
+      for (const groupByKey of groupByKeys) {
+        for (const row of report) {
+          if (row.date !== date) continue;
+
+          if (row.hasOwnProperty(groupByKey) && row[groupByKey] === groupByValue && row.hasOwnProperty("leads")) {
+            leads += row.leads;
+          }
+        }
+      }
+    }
+
+    return leads;
+  },
+
+  _getClicksDatasets(report, dates) {
     let groupByKeys = Chart._getGroupByKeys(report);
     let groupByValues = Chart._getGroupByValues(report, groupByKeys);
     let datasets = Object.fromEntries(
@@ -246,36 +272,77 @@ const Chart = {
     return datasets;
   },
 
+  _getLeadsDatasets(report, dates) {
+    let groupByKeys = Chart._getGroupByKeys(report);
+    let groupByValues = Chart._getGroupByValues(report, groupByKeys);
+    let datasets = Object.fromEntries(
+      groupByValues.map(function (groupByValue) {
+        return [groupByValue, []];
+      })
+    );
+
+    if (Object.keys(datasets).length === 0) {
+      datasets = {'Total': []};
+      groupByValues = ['Total'];
+    }
+
+    for (const date of dates) {
+      for (const groupByValue of groupByValues) {
+        datasets[groupByValue].push(
+          Chart._getLeadsFromReport(report, groupByValue, groupByKeys, date)
+        );
+      }
+    }
+
+    return datasets;
+  },
+
   view: function () {
     if (statisticsModel.report === null) return;
 
     let dates = Chart._getDays(statisticsModel.report);
-    let datasets = Chart._getDatasets(statisticsModel.report, dates);
+    let clicksDatasets = Chart._getClicksDatasets(statisticsModel.report, dates);
+    let leadsDatasets = Chart._getLeadsDatasets(statisticsModel.report, dates);
 
-    datasets = Object.keys(datasets).map(function (groupByValue) {
+    clicksDatasets = Object.keys(clicksDatasets).map(function (groupByValue) {
       return {
         label: groupByValue,
-        data: datasets[groupByValue],
+        data: clicksDatasets[groupByValue],
         borderColor: colour.randomColourShade("blue"),
         fill: false,
         cubicInterpolationMode: 'monotone',
       };
     });
 
-    const chartOptions = {
+    leadsDatasets = Object.keys(leadsDatasets).map(function (groupByValue) {
+      return {
+        label: groupByValue,
+        data: leadsDatasets[groupByValue],
+        borderColor: colour.randomColourShade("red"),
+        fill: false,
+        cubicInterpolationMode: 'monotone',
+      };
+    });
+
+    const clicksChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: datasets,
+        datasets: clicksDatasets,
       },
       options: {
         responsive: true,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Clicks Count'
-          },
-        },
+      },
+    };
+
+    const leadsChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: leadsDatasets,
+      },
+      options: {
+        responsive: true,
       },
     };
 
@@ -283,13 +350,22 @@ const Chart = {
       "div.container-fluid.pt-4.px-4",
       m(
         "div.row.g-4",
-        m(
-          "div.col-12",
-          m("div.bg-light.rounded.h-100.p-4", [
-            m("h6.mb-4", "Statistics Chart"),
-            m(ChartComponent, {chartOptions}),
-          ]),
-        ),
+        [
+          m(
+            "div.col-6",
+            m("div.bg-light.rounded.h-100.p-4", [
+              m("h6.mb-4", "Clicks Chart"),
+              m(ChartComponent, {chartOptions: clicksChartOptions}),
+            ]),
+          ),
+          m(
+            "div.col-6",
+            m("div.bg-light.rounded.h-100.p-4", [
+              m("h6.mb-4", "Leads Chart"),
+              m(ChartComponent, {chartOptions: leadsChartOptions}),
+            ]),
+          ),
+        ],
       ),
     );
   },
