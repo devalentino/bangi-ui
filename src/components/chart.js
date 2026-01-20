@@ -1,5 +1,10 @@
 var m = require("mithril");
 var ChartJS = require("chart.js/auto");
+var ChartColors = require("chart.js").Colors;
+
+if (ChartColors) {
+  ChartJS.register(ChartColors);
+}
 
 function Chart() {
   this.chartInstance = null;

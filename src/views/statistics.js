@@ -2,7 +2,6 @@ let m = require("mithril");
 let auth = require("../models/auth");
 let statisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
-let colour = require("../utils/colour");
 
 let filterAvailableCampaigns = [];
 
@@ -23,14 +22,46 @@ function setDefaultDateRange() {
   statisticsModel.filter.to = formatDate(today);
 }
 
-function getLeadsCount(row, status) {
-  if (row.hasOwnProperty("leads")) {
-    if (row.leads.hasOwnProperty(status)) {
-      return row.leads[status];
-    }
-  }
+function getGroupByKeys(report) {
+  let keys = [];
 
-  return 0;
+  report.forEach(function (row) {
+    Object.keys(row).filter(function (key) {
+      return !["date", "clicks", "leads", "lead_status"].includes(key);
+    }).forEach(function (key) {
+      if (!keys.includes(key)) {
+        keys.push(key);
+      }
+    });
+  });
+
+  return keys;
+}
+
+function getGroupByValues(report, groupByKeys) {
+  let groupByValues = [];
+
+  report.forEach(function (row) {
+    groupByKeys.forEach(function (groupByKey) {
+      if (row[groupByKey] && !groupByValues.includes(row[groupByKey])) {
+        groupByValues.push(row[groupByKey]);
+      }
+    });
+  });
+
+  return groupByValues;
+}
+
+function getDays(report) {
+  let days = [];
+
+  report.forEach(function (row) {
+    if (!days.includes(row.date)) {
+      days.push(row.date)
+    }
+  });
+
+  return days;
 }
 
 const Filter = {
@@ -155,52 +186,10 @@ const Filter = {
 };
 
 const Chart = {
-  _getGroupByKeys(report) {
-    let keys = [];
-
-    report.forEach(function (row) {
-      Object.keys(row).filter(function (key) {
-        return !["date", "clicks", "leads", "lead_status"].includes(key);
-      }).forEach(function (key) {
-        if (!keys.includes(key)) {
-          keys.push(key);
-        }
-      });
-    });
-
-    return keys;
-  },
-
-  _getGroupByValues(report, groupByKeys) {
-    let groupByValues = [];
-
-    report.forEach(function (row) {
-      groupByKeys.forEach(function (groupByKey) {
-        if (row[groupByKey] && !groupByValues.includes(row[groupByKey])) {
-          groupByValues.push(row[groupByKey]);
-        }
-      });
-    });
-
-    return groupByValues;
-  },
-
-  _getDays: function (report) {
-    let days = [];
-
-    report.forEach(function (row) {
-      if (!days.includes(row.date)) {
-        days.push(row.date)
-      }
-    });
-
-    return days;
-  },
-
   _getClicksFromReport(report, groupByValue, groupByKeys, date) {
     let clicks = 0;
 
-    if (groupByValue === 'Total') {
+    if (groupByValue === "Total") {
       for (const row of report) {
         if (row.date !== date) continue;
 
@@ -224,7 +213,7 @@ const Chart = {
   _getLeadsFromReport(report, groupByValue, groupByKeys, date) {
     let leads = 0;
 
-    if (groupByValue === 'Total') {
+    if (groupByValue === "Total") {
       for (const row of report) {
         if (row.date !== date) continue;
 
@@ -248,8 +237,8 @@ const Chart = {
   },
 
   _getClicksDatasets(report, dates) {
-    let groupByKeys = Chart._getGroupByKeys(report);
-    let groupByValues = Chart._getGroupByValues(report, groupByKeys);
+    let groupByKeys = getGroupByKeys(report);
+    let groupByValues = getGroupByValues(report, groupByKeys);
     let datasets = Object.fromEntries(
       groupByValues.map(function (groupByValue) {
         return [groupByValue, []];
@@ -257,8 +246,8 @@ const Chart = {
     );
 
     if (Object.keys(datasets).length === 0) {
-      datasets = {'Total': []};
-      groupByValues = ['Total'];
+      datasets = {"Total": []};
+      groupByValues = ["Total"];
     }
 
     for (const date of dates) {
@@ -273,8 +262,8 @@ const Chart = {
   },
 
   _getLeadsDatasets(report, dates) {
-    let groupByKeys = Chart._getGroupByKeys(report);
-    let groupByValues = Chart._getGroupByValues(report, groupByKeys);
+    let groupByKeys = getGroupByKeys(report);
+    let groupByValues = getGroupByValues(report, groupByKeys);
     let datasets = Object.fromEntries(
       groupByValues.map(function (groupByValue) {
         return [groupByValue, []];
@@ -282,8 +271,8 @@ const Chart = {
     );
 
     if (Object.keys(datasets).length === 0) {
-      datasets = {'Total': []};
-      groupByValues = ['Total'];
+      datasets = {"Total": []};
+      groupByValues = ["Total"];
     }
 
     for (const date of dates) {
@@ -300,7 +289,7 @@ const Chart = {
   view: function () {
     if (statisticsModel.report === null) return;
 
-    let dates = Chart._getDays(statisticsModel.report);
+    let dates = getDays(statisticsModel.report);
     let clicksDatasets = Chart._getClicksDatasets(statisticsModel.report, dates);
     let leadsDatasets = Chart._getLeadsDatasets(statisticsModel.report, dates);
 
@@ -308,9 +297,8 @@ const Chart = {
       return {
         label: groupByValue,
         data: clicksDatasets[groupByValue],
-        borderColor: colour.randomColourShade("blue"),
         fill: false,
-        cubicInterpolationMode: 'monotone',
+        cubicInterpolationMode: "monotone",
       };
     });
 
@@ -318,9 +306,8 @@ const Chart = {
       return {
         label: groupByValue,
         data: leadsDatasets[groupByValue],
-        borderColor: colour.randomColourShade("red"),
         fill: false,
-        cubicInterpolationMode: 'monotone',
+        cubicInterpolationMode: "monotone",
       };
     });
 
@@ -332,6 +319,11 @@ const Chart = {
       },
       options: {
         responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
       },
     };
 
@@ -343,6 +335,11 @@ const Chart = {
       },
       options: {
         responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
       },
     };
 
@@ -372,24 +369,86 @@ const Chart = {
 };
 
 const Table = {
-  _build_trs: function (report) {
+  _group: function(report, groupByKey, groupByValues, dates) {
+    let grouped = {};
+
+    dates.forEach(function(date) {
+      if (groupByValues.length > 0) {
+        groupByValues.forEach(function (groupByValue) {
+          let key = `${date}|${groupByValue}`;
+
+          if (!grouped.hasOwnProperty(key)) {
+
+            grouped[key] = {
+              date: date,
+              clicks: 0,
+              expected: 0,
+              approved: 0,
+              rejected: 0,
+              trash: 0,
+            };
+
+            grouped[key][groupByKey] = groupByValue;
+          }
+        });
+      } else {
+        grouped[date] = {
+          date: date,
+          clicks: 0,
+          expected: 0,
+          approved: 0,
+          rejected: 0,
+          trash: 0,
+        };
+      }
+    });
+
+    report.forEach(function(row) {
+      if (groupByKey && !row.hasOwnProperty(groupByKey)) return;
+
+      let key = groupByKey !== null ? `${row.date}|${row[groupByKey]}` : row.date;
+
+      let leadStatus = row.lead_status || "expected";
+      grouped[key]["clicks"] += row.clicks;
+
+      if (row.hasOwnProperty("leads")) {
+        grouped[key][leadStatus] = row.leads;
+      }
+
+      if (groupByKey !== null) {
+        grouped[key][groupByKey] = row[groupByKey];
+      }
+    });
+
+    return grouped;
+  },
+  _build_trs: function(report, groupByKey) {
     let trs = [];
     report.forEach(function (row) {
       trs.push(
         m("tr", [
-          m("td", row.date), // date
+          m("td", row.date),
+          ...(groupByKey !== null ? [m("td", row[groupByKey])] : []),
           m("td", row.clicks),
-          m("td", getLeadsCount(row, "expect")),
-          m("td", getLeadsCount(row, "accept")),
-          m("td", getLeadsCount(row, "reject")),
-          m("td", getLeadsCount(row, "trash")),
+          m("td", row.expected),
+          m("td", row.approved),
+          m("td", row.rejected),
+          m("td", row.trash),
         ]),
       );
     });
     return trs;
   },
+
   view: function () {
     if (statisticsModel.report === null) return;
+
+    let groupByKeys = getGroupByKeys(statisticsModel.report);
+    let groupByValues = getGroupByValues(statisticsModel.report, groupByKeys);
+    let groupByKey = groupByKeys.length > 0 ? groupByKeys[0] : null;
+    let days = getDays(statisticsModel.report);
+
+    let grouped = this._group(statisticsModel.report, groupByKey, groupByValues, days);
 
     return m(
       "div.container-fluid.pt-4.px-4",
@@ -406,14 +465,15 @@ const Table = {
                   "thead",
                   m("tr", [
                     m("th", {scope: "col"}, "Date"),
+                    ...(groupByKey !== null ? [m("th", {scope: "col"}, groupByKey)] : []),
                     m("th", {scope: "col"}, "Clicks"),
-                    m("th", {scope: "col"}, "Expect"),
-                    m("th", {scope: "col"}, "Accept"),
-                    m("th", {scope: "col"}, "Reject"),
+                    m("th", {scope: "col"}, "Expected"),
+                    m("th", {scope: "col"}, "Approved"),
+                    m("th", {scope: "col"}, "Rejected"),
                     m("th", {scope: "col"}, "Trash"),
                   ]),
                 ),
-                m("tbody", Table._build_trs(statisticsModel.report)),
+                m("tbody", Table._build_trs(Object.values(grouped), groupByKey)),
               ]),
             ),
           ]),
