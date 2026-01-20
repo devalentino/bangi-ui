@@ -86,41 +86,40 @@ const Filter = {
       ".container-fluid.pt-4.px-4",
       m(".row.g-4", [
         m(
-          ".col-sm-12.col-md-6.col-xl-3",
+          ".col-sm-12.col-md-6.col-xl-4",
           m(".h-100.bg-light.rounded.p-4", [
             m(
               ".d-flex.align-items-center.justify-content-between.mb-4",
-              m("h6.mb-0", "From"),
+              m("h6.mb-0", "Date Range"),
             ),
-            m("input.form-control", {
-              type: "date",
-              value: statisticsModel.filter.from || "",
-              oninput: function (event) {
-                statisticsModel.filter.from = event.target.value;
-                statisticsModel.fetch();
-              },
-            }),
+            m(".row.g-2", [
+              m(
+                ".col-12",
+                m("input.form-control", {
+                  type: "date",
+                  value: statisticsModel.filter.from || "",
+                  oninput: function (event) {
+                    statisticsModel.filter.from = event.target.value;
+                    statisticsModel.fetch();
+                  },
+                }),
+              ),
+              m(
+                ".col-12",
+                m("input.form-control", {
+                  type: "date",
+                  value: statisticsModel.filter.to || "",
+                  oninput: function (event) {
+                    statisticsModel.filter.to = event.target.value;
+                    statisticsModel.fetch();
+                  },
+                }),
+              ),
+            ]),
           ]),
         ),
         m(
-          ".col-sm-12.col-md-6.col-xl-3",
-          m(".h-100.bg-light.rounded.p-4", [
-            m(
-              ".d-flex.align-items-center.justify-content-between.mb-4",
-              m("h6.mb-0", "To"),
-            ),
-            m("input.form-control", {
-              type: "date",
-              value: statisticsModel.filter.to || "",
-              oninput: function (event) {
-                statisticsModel.filter.to = event.target.value;
-                statisticsModel.fetch();
-              },
-            }),
-          ]),
-        ),
-        m(
-          ".col-sm-12.col-md-6.col-xl-3",
+          ".col-sm-12.col-md-6.col-xl-4",
           m(".h-100.bg-light.rounded.p-4", [
             m(
               ".d-flex.align-items-center.justify-content-between.mb-4",
@@ -146,7 +145,7 @@ const Filter = {
           ]),
         ),
         m(
-          ".col-sm-12.col-md-6.col-xl-3",
+          ".col-sm-12.col-md-6.col-xl-4",
           m(".h-100.bg-light.rounded.p-4", [
             m(
               ".d-flex.align-items-center.justify-content-between.mb-4",
