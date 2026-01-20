@@ -209,14 +209,15 @@ const Chart = {
     return clicks;
   },
 
-  _getLeadsFromReport(report, groupByValue, groupByKeys, date) {
+  _getLeadsFromReport(report, groupByValue, groupByKeys, date, leadStatus) {
     let leads = 0;
+    let status = leadStatus ? String(leadStatus).toLowerCase() : null;
 
     if (groupByValue === "Total") {
       for (const row of report) {
         if (row.date !== date) continue;
 
-        if (row.hasOwnProperty("leads")) {
+        if (row.hasOwnProperty("leads") && matchesLeadStatus(row, status)) {
           leads += row.leads;
         }
       }
@@ -225,7 +226,12 @@ const Chart = {
         for (const row of report) {
           if (row.date !== date) continue;
 
-          if (row.hasOwnProperty(groupByKey) && row[groupByKey] === groupByValue && row.hasOwnProperty("leads")) {
+          if (
+            row.hasOwnProperty(groupByKey) &&
+            row[groupByKey] === groupByValue &&
+            row.hasOwnProperty("leads") &&
+            matchesLeadStatus(row, status)
+          ) {
             leads += row.leads;
           }
         }
@@ -260,7 +266,7 @@ const Chart = {
     return datasets;
   },
 
-  _getLeadsDatasets(report, dates) {
+  _getLeadsDatasets(report, dates, leadStatus) {
     let groupByKeys = getGroupByKeys(report);
     let groupByValues = getGroupByValues(report, groupByKeys);
     let datasets = Object.fromEntries(
@@ -277,7 +283,13 @@ const Chart = {
     for (const date of dates) {
       for (const groupByValue of groupByValues) {
         datasets[groupByValue].push(
-          Chart._getLeadsFromReport(report, groupByValue, groupByKeys, date)
+          Chart._getLeadsFromReport(
+            report,
+            groupByValue,
+            groupByKeys,
+            date,
+            leadStatus
+          )
         );
       }
     }
@@ -291,12 +303,17 @@ const Chart = {
     let dates = getDays(statisticsModel.report);
     let clicksDatasets = Chart._getClicksDatasets(statisticsModel.report, dates);
     let leadsDatasets = Chart._getLeadsDatasets(statisticsModel.report, dates);
+    let approvedLeadsDatasets = Chart._getLeadsDatasets(
+      statisticsModel.report,
+      dates,
+      "approved"
+    );
 
     clicksDatasets = Object.keys(clicksDatasets).map(function (groupByValue) {
       return {
         label: groupByValue,
         data: clicksDatasets[groupByValue],
-        fill: false,
+        fill: true,
         cubicInterpolationMode: "monotone",
       };
     });
@@ -305,7 +322,18 @@ const Chart = {
       return {
         label: groupByValue,
         data: leadsDatasets[groupByValue],
-        fill: false,
+        fill: true,
+        cubicInterpolationMode: "monotone",
+      };
+    });
+
+    approvedLeadsDatasets = Object.keys(approvedLeadsDatasets).map(function (
+      groupByValue
+    ) {
+      return {
+        label: groupByValue,
+        data: approvedLeadsDatasets[groupByValue],
+        fill: true,
         cubicInterpolationMode: "monotone",
       };
     });
@@ -342,36 +370,70 @@ const Chart = {
       },
     };
 
-    return m(
-      "div.container-fluid.pt-4.px-4",
+    const approvedLeadsChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: approvedLeadsDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+
+    return [
       m(
-        "div.row.g-4",
-        [
-          m(
-            "div.col-6",
-            m("div.bg-light.rounded.h-100.p-4", [
-              m("h6.mb-4", "Clicks Chart"),
-              m(ChartComponent, {chartOptions: clicksChartOptions}),
-            ]),
-          ),
-          m(
-            "div.col-6",
-            m("div.bg-light.rounded.h-100.p-4", [
-              m("h6.mb-4", "Leads Chart"),
-              m(ChartComponent, {chartOptions: leadsChartOptions}),
-            ]),
-          ),
-        ],
+        "div.container-fluid.pt-4.px-4",
+        m(
+          "div.row.g-4",
+          [
+            m(
+              "div.col-12.col-md-6.col-xl-6",
+              m("div.bg-light.rounded.h-100.p-4", [
+                m("h6.mb-4", "Clicks"),
+                m(ChartComponent, {chartOptions: clicksChartOptions}),
+              ]),
+            ),
+            m(
+              "div.col-12.col-md-6.col-xl-6",
+              m("div.bg-light.rounded.h-100.p-4", [
+                m("h6.mb-4", "Leads"),
+                m(ChartComponent, {chartOptions: leadsChartOptions}),
+              ]),
+            ),
+          ],
+        ),
       ),
-    );
+      m("div.container-fluid.pt-4.px-4",
+        m(
+          "div.row.g-4",
+          [
+            m(
+              "div.col-12.col-md-6.col-xl-6",
+              m("div.bg-light.rounded.h-100.p-4",
+                [
+                  m("h6.mb-4", "Approved Leads"),
+                  m(ChartComponent, {chartOptions: approvedLeadsChartOptions}),
+                ]
+              ),
+            ),
+          ]
+        )
+      )
+    ]
   },
 };
 
 const Table = {
-  _group: function(report, groupByKey, groupByValues, dates) {
+  _group: function (report, groupByKey, groupByValues, dates) {
     let grouped = {};
 
-    dates.forEach(function(date) {
+    dates.forEach(function (date) {
       if (groupByValues.length > 0) {
         groupByValues.forEach(function (groupByValue) {
           let key = `${date}|${groupByValue}`;
@@ -402,7 +464,7 @@ const Table = {
       }
     });
 
-    report.forEach(function(row) {
+    report.forEach(function (row) {
       if (groupByKey && !row.hasOwnProperty(groupByKey)) return;
 
       let key = groupByKey !== null ? `${row.date}|${row[groupByKey]}` : row.date;
@@ -421,7 +483,7 @@ const Table = {
 
     return grouped;
   },
-  _build_trs: function(report, groupByKey) {
+  _build_trs: function (report, groupByKey) {
     let trs = [];
     report.forEach(function (row) {
       trs.push(
@@ -456,7 +518,7 @@ const Table = {
         m(
           "div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
-            m("h6.mb-4", "Statistics Table"),
+            m("h6.mb-4", "Statistics"),
             m(
               "div.table-responsive",
               m("table.table", [
@@ -487,5 +549,11 @@ const Statistics = {
     return [m(Filter), m(Chart), m(Table)];
   },
 };
+
+function matchesLeadStatus(row, leadStatus) {
+  if (!leadStatus) return true;
+
+  return String(row.lead_status || "").toLowerCase() === leadStatus;
+}
 
 module.exports = Statistics;
