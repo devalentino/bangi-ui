@@ -4,3 +4,7 @@ bin
 css
 img
 lib
+
+.env
+.env.local
+AGENTS.md
