@@ -14,10 +14,16 @@ var Sidebar = {
           ),
           m(
             ".navbar-nav.w-100",
-            m("a.nav-item.nav-link.active", { href: "#!/" }, [
-              m("i.fa.fa-tachometer-alt.me-2"),
-              "Statistics",
-            ]),
+            [
+              m("a.nav-item.nav-link", { href: "#!/statistics" }, [
+                m("i.fa.fa-tachometer-alt.me-2"),
+                "Statistics",
+              ]),
+              m("a.nav-item.nav-link", { href: "#!/core/campaigns" }, [
+                m("i.fa.fa-bullhorn.me-2"),
+                "Campaigns",
+              ]),
+            ],
           ),
         ]),
       ),
