@@ -18,49 +18,38 @@ const CoreCampaign = {
   setFormValues: function (payload) {
     CoreCampaign.form.name = payload.name || "";
     CoreCampaign.form.costModel = payload.costModel || "cpc";
-    CoreCampaign.form.costValue =
-      payload.costValue !== null && payload.costValue !== undefined
-        ? String(payload.costValue)
-        : "";
+    CoreCampaign.form.costValue = payload.costValue || "";
     CoreCampaign.form.currency = payload.currency || "usd";
-    CoreCampaign.form.statusMapperText = payload.statusMapper
-      ? JSON.stringify(payload.statusMapper, null, 2)
-      : "";
+    CoreCampaign.form.statusMapperText = payload.statusMapper || "";
   },
 
   resetForm: function () {
     if (CoreCampaign.lastLoaded) {
       CoreCampaign.setFormValues(CoreCampaign.lastLoaded);
-      return;
+    } else {
+      CoreCampaign.setFormValues({});
     }
-
-    CoreCampaign.form.name = "";
-    CoreCampaign.form.costModel = "cpc";
-    CoreCampaign.form.costValue = "";
-    CoreCampaign.form.currency = "usd";
-    CoreCampaign.form.statusMapperText = "";
   },
 
-  load: function (campaignId) {
+  fetch: function (campaignId) {
     if (!campaignId) {
-      CoreCampaign.error = "Campaign id is missing.";
+      CoreCampaign.error = "Bad campaign id.";
       return;
     }
 
-    if (campaignId === "new") {
-      CoreCampaign.campaignId = campaignId;
-      CoreCampaign.error = null;
-      CoreCampaign.successMessage = null;
-      CoreCampaign.isLoading = false;
-      CoreCampaign.lastLoaded = null;
-      CoreCampaign.resetForm();
-      return;
-    }
-
-    CoreCampaign.isLoading = true;
+    CoreCampaign.campaignId = null;
     CoreCampaign.error = null;
     CoreCampaign.successMessage = null;
-    CoreCampaign.campaignId = campaignId;
+    CoreCampaign.lastLoaded = null;
+
+    if (campaignId === "new") {
+      CoreCampaign.isLoading = false;
+      CoreCampaign.resetForm();
+      return;
+    } else {
+      CoreCampaign.isLoading = true;
+      CoreCampaign.campaignId = campaignId;
+    }
 
     m.request({
       method: "GET",
@@ -127,7 +116,7 @@ const CoreCampaign = {
     };
   },
 
-  update: function () {
+  save: function () {
     CoreCampaign.error = null;
     CoreCampaign.successMessage = null;
 
@@ -137,13 +126,7 @@ const CoreCampaign = {
       return;
     }
 
-    let payload;
-    try {
-      payload = CoreCampaign.buildPayload();
-    } catch (error) {
-      CoreCampaign.error = "Status mapper must be valid JSON.";
-      return;
-    }
+    let payload = CoreCampaign.buildPayload();
 
     let isNew = CoreCampaign.campaignId === "new";
     let method = isNew ? "POST" : "PATCH";

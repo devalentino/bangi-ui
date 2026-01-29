@@ -3,12 +3,12 @@ let coreCampaignModel = require("../models/core_campaign");
 
 let CoreCampaign = {
   oninit: function () {
-    coreCampaignModel.load(m.route.param("campaignId"));
+    coreCampaignModel.fetch(m.route.param("campaignId"));
   },
   onbeforeupdate: function () {
     let campaignId = m.route.param("campaignId");
     if (campaignId && campaignId !== coreCampaignModel.campaignId) {
-      coreCampaignModel.load(campaignId);
+      coreCampaignModel.fetch(campaignId);
     }
   },
   view: function () {
@@ -40,7 +40,7 @@ let CoreCampaign = {
                     {
                       onsubmit: function (event) {
                         event.preventDefault();
-                        coreCampaignModel.update();
+                        coreCampaignModel.save();
                       },
                       onreset: function (event) {
                         event.preventDefault();
