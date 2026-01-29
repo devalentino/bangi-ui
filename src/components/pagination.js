@@ -6,13 +6,12 @@ var Pagination = {
     delete queryParams.total;
 
     let route = m.route.get().split("?")[0];
-    console.log(route, queryParams);
     m.route.set(route, queryParams);
   },
   view: function (vnode) {
     let pagination = vnode.attrs.pagination;
     let page = pagination.page;
-    let totalPages = Math.ceil(pagination.total / pagination.pageSize) + 1;
+    let totalPages = Math.ceil(pagination.total / pagination.pageSize);
 
     return m(
       ".d-flex.align-items-center.justify-content-between.mt-3",

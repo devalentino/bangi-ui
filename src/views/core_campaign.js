@@ -53,7 +53,7 @@ let CoreCampaign = {
                         m("input.form-control", {
                           type: "text",
                           id: "campaignName",
-                          placeholder: "Spring Promo - US",
+                          placeholder: "Campaign Name",
                           value: coreCampaignModel.form.name,
                           oninput: function (event) {
                             coreCampaignModel.form.name = event.target.value;
@@ -141,7 +141,7 @@ let CoreCampaign = {
                           id: "statusMapper",
                           rows: "4",
                           placeholder:
-                            '{"approved": "APPROVED", "rejected": "REJECTED"}',
+                            '{"parameter":"state","mapping":{"approved":"APPROVED","rejected":"REJECTED"}}',
                           value: coreCampaignModel.form.statusMapperText,
                           oninput: function (event) {
                             coreCampaignModel.form.statusMapperText =
@@ -150,7 +150,7 @@ let CoreCampaign = {
                         }),
                         m(
                           ".form-text",
-                          "JSON object that maps internal statuses to external values.",
+                          "JSON with parameter string and mapping object (string to string).",
                         ),
                       ]),
                       m(

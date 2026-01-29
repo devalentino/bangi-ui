@@ -20,7 +20,9 @@ const CoreCampaign = {
     CoreCampaign.form.costModel = payload.costModel || "cpc";
     CoreCampaign.form.costValue = payload.costValue || "";
     CoreCampaign.form.currency = payload.currency || "usd";
-    CoreCampaign.form.statusMapperText = payload.statusMapper || "";
+    CoreCampaign.form.statusMapperText = payload.statusMapper
+      ? JSON.stringify(payload.statusMapper, null, 2)
+      : "";
   },
 
   resetForm: function () {
@@ -90,7 +92,35 @@ const CoreCampaign = {
 
     if (CoreCampaign.form.statusMapperText.trim().length > 0) {
       try {
-        JSON.parse(CoreCampaign.form.statusMapperText);
+        let parsed = JSON.parse(CoreCampaign.form.statusMapperText);
+
+        if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+          return "Status mapper must be an object with parameter and mapping.";
+        }
+
+        if (typeof parsed.parameter !== "string" || !parsed.parameter.trim()) {
+          return "Status mapper parameter must be a non-empty string.";
+        }
+
+        if (
+          parsed.mapping === null ||
+          typeof parsed.mapping !== "object" ||
+          Array.isArray(parsed.mapping)
+        ) {
+          return "Status mapper mapping must be an object.";
+        }
+
+        let keys = Object.keys(parsed.mapping);
+        for (let i = 0; i < keys.length; i += 1) {
+          let key = keys[i];
+          if (typeof key !== "string" || !key.trim()) {
+            return "Status mapper mapping keys must be non-empty strings.";
+          }
+
+          if (typeof parsed.mapping[key] !== "string") {
+            return "Status mapper mapping values must be strings.";
+          }
+        }
       } catch (error) {
         return "Status mapper must be valid JSON.";
       }
