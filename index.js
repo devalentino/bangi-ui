@@ -6,6 +6,8 @@ var authView = require("./src/views/auth");
 var statisticsView = require("./src/views/statistics");
 var coreCampaignView = require("./src/views/core_campaign");
 var coreCampaignsView = require("./src/views/core_campaigns");
+var coreFlowsView = require("./src/views/core_flows");
+var coreFlowView = require("./src/views/core_flow");
 
 m.route(document.getElementById("content"), "/statistics", {
   "/sign-in": {
@@ -36,6 +38,26 @@ m.route(document.getElementById("content"), "/statistics", {
     },
     render: function () {
       return m(AuthenticatedPage, { page: coreCampaignsView });
+    },
+  },
+  "/core/flows": {
+    onmatch: function () {
+      if (!auth.Authentication.isAuthenticated) {
+        m.route.set("/sign-in");
+      }
+    },
+    render: function () {
+      return m(AuthenticatedPage, { page: coreFlowsView });
+    },
+  },
+  "/core/flows/:flowId": {
+    onmatch: function () {
+      if (!auth.Authentication.isAuthenticated) {
+        m.route.set("/sign-in");
+      }
+    },
+    render: function () {
+      return m(AuthenticatedPage, { page: coreFlowView });
     },
   },
   "/core/campaigns/:campaignId": {
