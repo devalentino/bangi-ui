@@ -23,10 +23,6 @@ var Sidebar = {
                 m("i.fa.fa-bullhorn.me-2"),
                 "Campaigns",
               ]),
-              m("a.nav-item.nav-link", { href: "#!/core/flows" }, [
-                m("i.fa.fa-stream.me-2"),
-                "Flows",
-              ]),
             ],
           ),
         ]),

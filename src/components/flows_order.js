@@ -25,32 +25,6 @@ let FlowsOrder = {
       FlowsOrder.onReorderCallback(mapping);
     }
   },
-  // _initSortable: function () {
-  //   console.log('_initSortable');
-  //   if (FlowsOrder.sortable !== null) {
-  //     return;
-  //   }
-  //
-  //   let sortableList = document.getElementById("flows-sortable-list");
-  //   if (sortableList === null) {
-  //     return;
-  //   }
-  //
-  //   FlowsOrder.sortable = new sortable(sortableList, {
-  //     animation: 150, // CSS animation when moving items
-  //     onEnd: function (evt) {
-  //       FlowsOrder._reorderItems(evt.oldIndex, evt.newIndex);
-  //     },
-  //   });
-  //
-  //   console.log('sortable is set', FlowsOrder.items);
-  // },
-  // init: function () {
-  //   FlowsOrder._initSortable();
-  // },
-  // onbeforeupdate: function () {
-  //   FlowsOrder._initSortable();
-  // },
   view: function (vnode) {
     FlowsOrder.items = vnode.attrs.flows;
     FlowsOrder.onReorderCallback = vnode.attrs.onReorder;
@@ -86,10 +60,17 @@ let FlowsOrder = {
             "li.list-group-item.d-flex.align-items-center.justify-content-between",
             [
               m("div", [
-                m("div.fw-semibold", flow.name),
-                m("div.small.text-muted", flow.id),
+                m(
+                  "a.fw-semibold.text-decoration-none",
+                  {
+                    href:
+                      `#!/core/campaigns/${campaignId}/flows/${flow.id}`,
+                  },
+                  flow.name,
+                ),
+                m("div.small.text-muted", flow.actionType),
               ]),
-              m("span.badge.bg-secondary", `#${index + 1}`),
+              m("span.badge.bg-secondary", `${flow.orderValue}`),
             ],
           );
         }),

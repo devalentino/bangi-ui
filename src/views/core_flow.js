@@ -11,8 +11,12 @@ let CoreFlow = {
   },
   onbeforeupdate: function () {
     let flowId = m.route.param("flowId");
-    if (flowId && flowId !== coreFlowModel.flowId) {
-      coreFlowModel.fetch(flowId, m.route.param("campaignId"));
+    let campaignId = m.route.param("campaignId");
+    if (
+      flowId
+      && (flowId !== coreFlowModel.flowId || campaignId !== coreFlowModel.campaignId)
+    ) {
+      coreFlowModel.fetch(flowId, campaignId);
     }
   },
   view: function () {

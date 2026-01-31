@@ -7,23 +7,35 @@ let CoreCampaign = {
   oninit: function () {
     let campaignId = m.route.param("campaignId");
     coreCampaignModel.fetch(campaignId);
-    coreFlowsModel.fetch(campaignId, {
-      page: 1,
-      pageSize: 1000,
-      sortBy: "orderValue",
-      sortOrder: "desc"
-    });
-  },
-  onbeforeupdate: function () {
-    let campaignId = m.route.param("campaignId");
-    if (campaignId && campaignId !== coreCampaignModel.campaignId) {
-      coreCampaignModel.fetch(campaignId);
+    if (campaignId && campaignId !== "new") {
       coreFlowsModel.fetch(campaignId, {
         page: 1,
         pageSize: 1000,
         sortBy: "orderValue",
         sortOrder: "desc"
       });
+    } else {
+      coreFlowsModel.items = [];
+      coreFlowsModel.error = null;
+      coreFlowsModel.isLoading = false;
+    }
+  },
+  onbeforeupdate: function () {
+    let campaignId = m.route.param("campaignId");
+    if (campaignId && campaignId !== coreCampaignModel.campaignId) {
+      coreCampaignModel.fetch(campaignId);
+      if (campaignId !== "new") {
+        coreFlowsModel.fetch(campaignId, {
+          page: 1,
+          pageSize: 1000,
+          sortBy: "orderValue",
+          sortOrder: "desc"
+        });
+      } else {
+        coreFlowsModel.items = [];
+        coreFlowsModel.error = null;
+        coreFlowsModel.isLoading = false;
+      }
     }
   },
   view: function () {
@@ -185,7 +197,25 @@ let CoreCampaign = {
         ]),
         m(".col-12.col-xl-6", [
           m(".bg-light.rounded.h-100.p-4", [
-            m("h6.mb-4", "Flows"),
+            m(
+              ".d-flex.align-items-center.justify-content-between.mb-4",
+              [
+                m("h6.mb-0", "Flows"),
+                m(
+                  "a.btn.btn-primary.btn-sm",
+                  {
+                    href: coreCampaignModel.campaignId
+                      && coreCampaignModel.campaignId !== "new"
+                      ? `#!/core/campaigns/${coreCampaignModel.campaignId}/flows/new`
+                      : "#",
+                    disabled:
+                      !coreCampaignModel.campaignId
+                      || coreCampaignModel.campaignId === "new",
+                  },
+                  "New Flow",
+                ),
+              ],
+            ),
             coreFlowsModel.isLoading
               ? m("div", "Loading flows...")
               : [

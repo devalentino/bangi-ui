@@ -3,6 +3,7 @@ const auth = require("./auth");
 
 const CoreFlow = {
   flowId: null,
+  campaignId: null,
   isLoading: false,
   error: null,
   successMessage: null,
@@ -66,18 +67,22 @@ const CoreFlow = {
     }
 
     CoreFlow.flowId = null;
+    CoreFlow.campaignId = campaignId;
     CoreFlow.error = null;
     CoreFlow.successMessage = null;
     CoreFlow.lastLoaded = null;
     CoreFlow.isLoading = true;
 
     if (flowId === "new") {
+      if (campaignId === undefined || campaignId === null || campaignId === "") {
+        CoreFlow.error = "Campaign ID is required.";
+        CoreFlow.isLoading = false;
+        return;
+      }
       CoreFlow.flowId = flowId;
       CoreFlow.isLoading = false;
       CoreFlow.resetForm();
-      if (campaignId !== undefined && campaignId !== null) {
-        CoreFlow.form.campaignId = String(campaignId);
-      }
+      CoreFlow.form.campaignId = String(campaignId);
       return;
     }
 
@@ -89,9 +94,8 @@ const CoreFlow = {
 
     m.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/flows/${flowId}`,
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/${flowId}`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
-      params: { campaignId: campaignId },
     })
       .then(function (payload) {
         CoreFlow.flowId = flowId;
@@ -143,10 +147,6 @@ const CoreFlow = {
       isEnabled: CoreFlow.form.isEnabled,
     };
 
-    if (CoreFlow.flowId === "new") {
-      payload.campaignId = Number(CoreFlow.form.campaignId);
-    }
-
     return payload;
   },
 
@@ -176,14 +176,17 @@ const CoreFlow = {
       return;
     }
 
+    if (CoreFlow.form.campaignId === null || CoreFlow.form.campaignId === "") {
+      CoreFlow.error = "Campaign ID is required.";
+      return;
+    }
+
     let payload = CoreFlow.buildPayload();
     let isNew = CoreFlow.flowId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/core/flows`
-      : `${process.env.BACKEND_API_BASE_URL}/core/flows/${CoreFlow.flowId}`;
-
-    console.log(payload);
+      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.form.campaignId}/flows`
+      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.form.campaignId}/flows/${CoreFlow.flowId}`;
 
     m.request(
       {
@@ -201,7 +204,7 @@ const CoreFlow = {
           ? "Flow created successfully."
           : "Flow updated successfully.";
         setTimeout(function () {
-          m.route.set("/core/flows");
+          m.route.set(`/core/campaigns/${CoreFlow.form.campaignId}`);
         }, 2000);
       })
       .catch(function () {
