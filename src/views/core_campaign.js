@@ -94,6 +94,8 @@ class CoreCampaignView {
                             ],
                           ),
                         ]),
+                      ]),
+                      m(".row.g-3.mt-1", [
                         m(".col-sm-12.col-md-6", [
                           m(
                             "label.form-label",
@@ -111,8 +113,6 @@ class CoreCampaignView {
                             }.bind(this),
                           }),
                         ]),
-                      ]),
-                      m(".row.g-3.mt-1", [
                         m(".col-sm-12.col-md-6", [
                           m(
                             "label.form-label",
@@ -147,6 +147,7 @@ class CoreCampaignView {
                           rows: "4",
                           placeholder:
                             '{"parameter":"state","mapping":{"approved":"APPROVED","rejected":"REJECTED"}}',
+                          class: "font-monospace",
                           value: this.campaignModel.form.statusMapperText,
                           oninput: function (event) {
                             this.campaignModel.form.statusMapperText =
@@ -205,6 +206,11 @@ class CoreCampaignView {
                         this.campaignModel.campaignId,
                         mapping,
                       );
+                    }.bind(this),
+                    onDelete: function (flow) {
+                      return this.flowsModel.deleteFlow(flow.id).then(function () {
+                        this.flowsModel.fetch();
+                      }.bind(this));
                     }.bind(this),
                   }),
                 ],

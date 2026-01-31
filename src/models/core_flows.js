@@ -49,6 +49,13 @@ class CoreFlowsModel {
         this.isLoading = false;
       }.bind(this));
   }
+
+  deleteFlow(flowId) {
+    return api.request({
+      method: "DELETE",
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${flowId}`,
+    });
+  }
 }
 
 module.exports = CoreFlowsModel;

@@ -1,10 +1,15 @@
 let m = require("mithril");
 let Sortable = require("sortablejs");
+let ConfirmModal = require("./confirm_modal");
 
 class Flows {
   constructor() {
     this.items = [];
     this.onReorderCallback = null;
+    this.onDeleteCallback = null;
+    this.deleteTarget = null;
+    this.isDeleting = false;
+    this.error = null;
   }
 
   _reorderItems(oldIndex, newIndex) {
@@ -30,15 +35,18 @@ class Flows {
   view(vnode) {
     this.items = vnode.attrs.flows;
     this.onReorderCallback = vnode.attrs.onReorder;
+    this.onDeleteCallback = vnode.attrs.onDelete;
     let campaignId = vnode.attrs.campaignId;
 
     if (this.items.length === 0) {
       return m("div.text-muted", "No flows found.");
     }
 
+    let self = this;
+
     return m("div", [
-      vnode.state.error
-        ? m(".alert.alert-danger", vnode.state.error)
+      this.error
+        ? m(".alert.alert-danger", this.error)
         : null,
       m(
         "ul.list-group",
@@ -80,16 +88,62 @@ class Flows {
                 ),
               ]),
               m(
-                "span.badge.bg-secondary",
-                m("i", {
-                  class: flow.isEnabled ? "fa fa-check" : "fa fa-ban",
-                  title: flow.isEnabled ? "Enabled" : "Disabled",
-                }),
+                "button.btn.btn-sm",
+                {
+                  type: "button",
+                  onclick: function () {
+                    self.deleteTarget = flow;
+                    self.error = null;
+                  },
+                },
+                m("i", { class: "fa fa-trash", title: "Delete" }),
               ),
             ],
           );
         }),
       ),
+      m(ConfirmModal, {
+        isOpen: Boolean(this.deleteTarget),
+        isBusy: this.isDeleting,
+        title: "Delete flow",
+        body: this.deleteTarget
+          ? m(
+              "p.mb-0",
+              `Are you sure you want to delete \"${
+                this.deleteTarget.name || this.deleteTarget.id
+              }\"?`,
+            )
+          : null,
+        confirmText: this.isDeleting ? "Deleting..." : "Delete",
+        cancelText: "Cancel",
+        onCancel: function () {
+          if (this.isDeleting) {
+            return;
+          }
+          this.deleteTarget = null;
+        }.bind(this),
+        onConfirm: function () {
+          if (typeof this.onDeleteCallback !== "function") {
+            this.error = "Delete handler is not configured.";
+            this.deleteTarget = null;
+            return;
+          }
+
+          this.isDeleting = true;
+          this.error = null;
+          Promise.resolve(this.onDeleteCallback(this.deleteTarget))
+            .then(function () {
+              this.deleteTarget = null;
+              this.isDeleting = false;
+              m.redraw();
+            }.bind(this))
+            .catch(function () {
+              this.error = "Failed to delete flow.";
+              this.isDeleting = false;
+              m.redraw();
+            }.bind(this));
+        }.bind(this),
+      }),
     ]);
   }
 }
