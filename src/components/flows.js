@@ -78,13 +78,18 @@ class Flows {
                 ),
                 m(
                   "div.small.text-muted",
-                  m("i", {
-                    class:
-                      flow.actionType === "render"
-                        ? "fa fa-file-alt"
-                        : "fa fa-external-link-alt",
-                    title: flow.actionType || "Action",
-                  }),
+                  [
+                    m("i", {
+                      class:
+                        flow.actionType === "render"
+                          ? "fa fa-file-alt"
+                          : "fa fa-external-link-alt",
+                      title: flow.actionType,
+                    }),
+                    flow.redirectUrl
+                      ? m("span.ms-2.text-break", flow.redirectUrl)
+                      : null,
+                  ],
                 ),
               ]),
               m(
@@ -131,17 +136,7 @@ class Flows {
 
           this.isDeleting = true;
           this.error = null;
-          Promise.resolve(this.onDeleteCallback(this.deleteTarget))
-            .then(function () {
-              this.deleteTarget = null;
-              this.isDeleting = false;
-              m.redraw();
-            }.bind(this))
-            .catch(function () {
-              this.error = "Failed to delete flow.";
-              this.isDeleting = false;
-              m.redraw();
-            }.bind(this));
+          this.onDeleteCallback(this.deleteTarget);
         }.bind(this),
       }),
     ]);

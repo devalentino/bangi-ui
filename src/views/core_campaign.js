@@ -209,7 +209,12 @@ class CoreCampaignView {
                     }.bind(this),
                     onDelete: function (flow) {
                       return this.flowsModel.deleteFlow(flow.id).then(function () {
-                        this.flowsModel.fetch();
+                        this.flowsModel.fetch({
+                          page: 1,
+                          pageSize: 1000,
+                          sortBy: "orderValue",
+                          sortOrder: "asc",
+                        });
                       }.bind(this));
                     }.bind(this),
                   }),
