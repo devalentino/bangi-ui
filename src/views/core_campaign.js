@@ -1,7 +1,7 @@
 let m = require("mithril");
 let coreCampaignModel = require("../models/core_campaign");
 let coreFlowsModel = require("../models/core_flows");
-let FlowsOrder = require("../components/flows_order");
+let Flows = require("../components/flows");
 
 let CoreCampaign = {
   oninit: function () {
@@ -222,7 +222,7 @@ let CoreCampaign = {
                   coreFlowsModel.error
                     ? m(".alert.alert-danger", coreFlowsModel.error)
                     : null,
-                  m(FlowsOrder, {
+                  m(Flows, {
                     campaignId: coreCampaignModel.campaignId,
                     flows: coreFlowsModel.items,
                     onReorder: function (mapping) {

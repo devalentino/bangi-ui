@@ -2,8 +2,7 @@ let m = require("mithril");
 let Sortable = require("sortablejs");
 
 
-let FlowsOrder = {
-  sortable: null,
+let Flows = {
   items: [],
   onReorderCallback: null,
   _reorderItems: function(oldIndex, newIndex) {
@@ -11,30 +10,26 @@ let FlowsOrder = {
       return;
     }
 
-    let items = FlowsOrder.items.slice();
+    let items = Flows.items.slice();
 
     let moved = items.splice(oldIndex, 1)[0];
     items.splice(newIndex, 0, moved);
-    FlowsOrder.items = items;
+    Flows.items = items;
 
-    if (typeof FlowsOrder.onReorderCallback === "function") {
+    if (typeof Flows.onReorderCallback === "function") {
       let mapping = Object.fromEntries(items.map(function (item, index){
-        return [item.id, FlowsOrder.items.length - index];
+        return [item.id, items.length - index];
       }));
 
-      FlowsOrder.onReorderCallback(mapping);
+      Flows.onReorderCallback(mapping);
     }
   },
   view: function (vnode) {
-    FlowsOrder.items = vnode.attrs.flows;
-    FlowsOrder.onReorderCallback = vnode.attrs.onReorder;
+    Flows.items = vnode.attrs.flows;
+    Flows.onReorderCallback = vnode.attrs.onReorder;
     let campaignId = vnode.attrs.campaignId;
 
-    if (!campaignId) {
-      return m("div.text-muted", "No campaign selected.");
-    }
-
-    if (FlowsOrder.items.length === 0) {
+    if (Flows.items.length === 0) {
       return m("div.text-muted", "No flows found.");
     }
 
@@ -45,17 +40,16 @@ let FlowsOrder = {
       m(
         "ul.list-group",
         {
-          id: "flows-sortable-list",
           oncreate: function (vnode) {
             Sortable.create(vnode.dom, {
               onEnd: (e) => {
-                FlowsOrder._reorderItems(e.oldIndex, e.newIndex);
+                Flows._reorderItems(e.oldIndex, e.newIndex);
                 m.redraw();
               }
             });
           }
         },
-        FlowsOrder.items.map(function (flow, index) {
+        Flows.items.map(function (flow, index) {
           return m(
             "li.list-group-item.d-flex.align-items-center.justify-content-between",
             [
@@ -79,4 +73,4 @@ let FlowsOrder = {
   },
 };
 
-module.exports = FlowsOrder;
+module.exports = Flows;
