@@ -17,9 +17,7 @@ const CoreFlow = {
     landingPath: null,
     orderValue: null,
     isEnabled: true,
-    campaignId: null,
   },
-  campaigns: [],
 
   setFormValues: function (payload) {
     CoreFlow.form.name = payload.name || "";
@@ -33,7 +31,6 @@ const CoreFlow = {
         ? String(payload.orderValue)
         : "0";
     CoreFlow.form.isEnabled = Boolean(payload.isEnabled);
-    CoreFlow.form.campaignId = payload.campaignId || null;
   },
 
   resetForm: function () {
@@ -44,20 +41,6 @@ const CoreFlow = {
       CoreFlow.form.orderValue = "0";
       CoreFlow.form.isEnabled = true;
     }
-  },
-
-  loadCampaigns: function () {
-    m.request({
-      method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/filters/campaigns`,
-      headers: { Authorization: `Basic ${auth.Authentication.token}` },
-    })
-      .then(function (payload) {
-        CoreFlow.campaigns = payload;
-      })
-      .catch(function () {
-        CoreFlow.campaigns = [];
-      });
   },
 
   fetch: function (flowId, campaignId) {
@@ -82,7 +65,6 @@ const CoreFlow = {
       CoreFlow.flowId = flowId;
       CoreFlow.isLoading = false;
       CoreFlow.resetForm();
-      CoreFlow.form.campaignId = String(campaignId);
       return;
     }
 
@@ -110,12 +92,6 @@ const CoreFlow = {
   },
 
   validate: function () {
-    if (
-      CoreFlow.flowId === "new"
-      && (CoreFlow.form.campaignId === null || CoreFlow.form.campaignId.trim() === "")) {
-      return "Campaign ID is required.";
-    }
-
     if (!CoreFlow.form.name.trim()) {
       return "Name is required.";
     }
@@ -126,6 +102,14 @@ const CoreFlow = {
 
     if (!CoreFlow.form.actionType) {
       return "Action type is required.";
+    }
+
+    if (CoreFlow.form.actionType === "redirect") {
+      try {
+        new URL(CoreFlow.form.redirectUrl.trim());
+      } catch (error) {
+        return "Redirect URL must be a valid URL.";
+      }
     }
 
     if (CoreFlow.form.actionType === "render" && !CoreFlow.form.landingArchive) {
@@ -176,17 +160,12 @@ const CoreFlow = {
       return;
     }
 
-    if (CoreFlow.form.campaignId === null || CoreFlow.form.campaignId === "") {
-      CoreFlow.error = "Campaign ID is required.";
-      return;
-    }
-
     let payload = CoreFlow.buildPayload();
     let isNew = CoreFlow.flowId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.form.campaignId}/flows`
-      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.form.campaignId}/flows/${CoreFlow.flowId}`;
+      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.campaignId}/flows`
+      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.campaignId}/flows/${CoreFlow.flowId}`;
 
     m.request(
       {
@@ -204,7 +183,7 @@ const CoreFlow = {
           ? "Flow created successfully."
           : "Flow updated successfully.";
         setTimeout(function () {
-          m.route.set(`/core/campaigns/${CoreFlow.form.campaignId}`);
+            m.route.set(`/core/campaigns/${CoreFlow.campaignId}`);
         }, 2000);
       })
       .catch(function () {

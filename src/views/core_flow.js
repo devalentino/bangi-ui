@@ -7,7 +7,6 @@ let CoreFlow = {
       m.route.param("flowId"),
       m.route.param("campaignId"),
     );
-    coreFlowModel.loadCampaigns();
   },
   onbeforeupdate: function () {
     let flowId = m.route.param("flowId");
@@ -148,38 +147,6 @@ let CoreFlow = {
                                   coreFlowModel.form.landingPath || "-",
                                 ),
                               ],
-                        ]),
-                      ]),
-                      m(".row.g-3.mt-1", [
-                        m(".col-sm-12.col-md-6", [
-                          m(
-                            "label.form-label",
-                            { for: "campaignId" },
-                            "Campaign",
-                          ),
-                          m(
-                            "select.form-select",
-                            {
-                              id: "campaignId",
-                              disabled: !isNew,
-                              value: coreFlowModel.form.campaignId,
-                              oninput: function (event) {
-                                coreFlowModel.form.campaignId =
-                                  event.target.value;
-                              },
-                            },
-                            [
-                              m("option", { value: "" }, "Select campaign"),
-                            ].concat(
-                              coreFlowModel.campaigns.map(function (campaign) {
-                                return m(
-                                  "option",
-                                  { value: String(campaign.id) },
-                                  campaign.name,
-                                );
-                              }),
-                            ),
-                          ),
                         ]),
                       ]),
                       m(".mb-3.mt-3", [
