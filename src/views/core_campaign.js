@@ -1,44 +1,55 @@
 let m = require("mithril");
-let coreCampaignModel = require("../models/core_campaign");
-let coreFlowsModel = require("../models/core_flows");
+let CoreCampaignModel = require("../models/core_campaign");
+let CoreFlowsModel = require("../models/core_flows");
 let Flows = require("../components/flows");
 
-let CoreCampaign = {
-  oninit: function () {
-    let campaignId = m.route.param("campaignId");
+class CoreCampaignView {
+  constructor(vnode) {
+    this.auth = vnode.attrs.auth;
+    this.campaignModel = new CoreCampaignModel(this.auth);
+    this.flowsModel = new CoreFlowsModel(this.auth);
+  }
 
-    coreFlowsModel.items = [];
+  oninit() {
+    let campaignId = m.route.param("campaignId");
+    this.campaignModel.fetch(campaignId);
     if (campaignId && campaignId !== "new") {
-      coreCampaignModel.fetch(campaignId);
-      coreFlowsModel.fetch(campaignId, {
+      this.flowsModel.fetch({
+        campaignId: campaignId,
         page: 1,
         pageSize: 1000,
         sortBy: "orderValue",
-        sortOrder: "desc"
+        sortOrder: "asc",
       });
+    } else {
+      this.flowsModel.items = [];
+      this.flowsModel.error = null;
+      this.flowsModel.isLoading = false;
     }
-  },
-  onbeforeupdate: function () {
-    let campaignId = m.route.param("campaignId");
+  }
 
-    if (campaignId && campaignId !== coreCampaignModel.campaignId) {
-      coreCampaignModel.fetch(campaignId);
+  onbeforeupdate() {
+    let campaignId = m.route.param("campaignId");
+    if (campaignId && campaignId !== this.campaignModel.campaignId) {
+      this.campaignModel.fetch(campaignId);
       if (campaignId !== "new") {
-        coreFlowsModel.fetch(campaignId, {
+        this.flowsModel.fetch({
+          campaignId: campaignId,
           page: 1,
           pageSize: 1000,
           sortBy: "orderValue",
-          sortOrder: "desc"
+          sortOrder: "asc",
         });
       } else {
-        coreFlowsModel.items = [];
-        coreFlowsModel.error = null;
-        coreFlowsModel.isLoading = false;
+        this.flowsModel.items = [];
+        this.flowsModel.error = null;
+        this.flowsModel.isLoading = false;
       }
     }
-  },
-  view: function () {
-    let isNew = coreCampaignModel.campaignId === "new";
+  }
+
+  view() {
+    let isNew = this.campaignModel.campaignId === "new";
 
     return m(
       ".container-fluid.pt-4.px-4",
@@ -49,16 +60,16 @@ let CoreCampaign = {
               "h6.mb-4",
               isNew ? "New Core Campaign" : "Core Campaign Modification",
             ),
-            coreCampaignModel.isLoading
+            this.campaignModel.isLoading
               ? m("div", "Loading campaign...")
               : [
-                  coreCampaignModel.error
-                    ? m(".alert.alert-danger", coreCampaignModel.error)
+                  this.campaignModel.error
+                    ? m(".alert.alert-danger", this.campaignModel.error)
                     : null,
-                  coreCampaignModel.successMessage
+                  this.campaignModel.successMessage
                     ? m(
                         ".alert.alert-success",
-                        coreCampaignModel.successMessage,
+                        this.campaignModel.successMessage,
                       )
                     : null,
                   m(
@@ -66,12 +77,12 @@ let CoreCampaign = {
                     {
                       onsubmit: function (event) {
                         event.preventDefault();
-                        coreCampaignModel.save();
-                      },
+                        this.campaignModel.save();
+                      }.bind(this),
                       onreset: function (event) {
                         event.preventDefault();
-                        coreCampaignModel.resetForm();
-                      },
+                        this.campaignModel.resetForm();
+                      }.bind(this),
                     },
                     [
                       m(".mb-3", [
@@ -80,32 +91,54 @@ let CoreCampaign = {
                           type: "text",
                           id: "campaignName",
                           placeholder: "Campaign Name",
-                          value: coreCampaignModel.form.name,
+                          value: this.campaignModel.form.name,
                           oninput: function (event) {
-                            coreCampaignModel.form.name = event.target.value;
-                          },
+                            this.campaignModel.form.name = event.target.value;
+                          }.bind(this),
                         }),
                       ]),
                       m(".row.g-3", [
                         m(".col-sm-12.col-md-6", [
                           m(
                             "label.form-label",
+                            { for: "costModel" },
+                            "Cost Model",
+                          ),
+                          m(
+                            "select.form-select",
+                            {
+                              id: "costModel",
+                              value: this.campaignModel.form.costModel,
+                              onchange: function (event) {
+                                this.campaignModel.form.costModel =
+                                  event.target.value;
+                              }.bind(this),
+                            },
+                            [
+                              m("option", { value: "cpc" }, "CPC"),
+                              m("option", { value: "cpa" }, "CPA"),
+                            ],
+                          ),
+                        ]),
+                        m(".col-sm-12.col-md-6", [
+                          m(
+                            "label.form-label",
                             { for: "costValue" },
-                            "Cost value",
+                            "Cost Value",
                           ),
                           m("input.form-control", {
                             type: "number",
-                            min: "0",
-                            step: "0.01",
                             id: "costValue",
-                            placeholder: "1.25",
-                            value: coreCampaignModel.form.costValue,
+                            placeholder: "Cost Value",
+                            value: this.campaignModel.form.costValue,
                             oninput: function (event) {
-                              coreCampaignModel.form.costValue =
+                              this.campaignModel.form.costValue =
                                 event.target.value;
-                            },
+                            }.bind(this),
                           }),
                         ]),
+                      ]),
+                      m(".row.g-3.mt-1", [
                         m(".col-sm-12.col-md-6", [
                           m(
                             "label.form-label",
@@ -116,43 +149,15 @@ let CoreCampaign = {
                             "select.form-select",
                             {
                               id: "currency",
-                              value: coreCampaignModel.form.currency,
-                              oninput: function (event) {
-                                coreCampaignModel.form.currency =
+                              value: this.campaignModel.form.currency,
+                              onchange: function (event) {
+                                this.campaignModel.form.currency =
                                   event.target.value;
-                              },
+                              }.bind(this),
                             },
                             [
                               m("option", { value: "usd" }, "USD"),
                               m("option", { value: "eur" }, "EUR"),
-                              m("option", { value: "uah" }, "UAH"),
-                            ],
-                          ),
-                        ]),
-                      ]),
-                      m(".row.g-3.mt-1", [
-                        m(".col-sm-12.col-md-6", [
-                          m(
-                            "label.form-label",
-                            { for: "costModel" },
-                            "Cost model",
-                          ),
-                          m(
-                            "select.form-select",
-                            {
-                              id: "costModel",
-                              value: coreCampaignModel.form.costModel,
-                              oninput: function (event) {
-                                coreCampaignModel.form.costModel =
-                                  event.target.value;
-                              },
-                            },
-                            [
-                              m("option", { value: "cpc" }, "CPC"),
-                              m("option", { value: "cpm" }, "CPM"),
-                              m("option", { value: "cpl" }, "CPL"),
-                              m("option", { value: "cpa" }, "CPA"),
-                              m("option", { value: "cpi" }, "CPI"),
                             ],
                           ),
                         ]),
@@ -161,18 +166,18 @@ let CoreCampaign = {
                         m(
                           "label.form-label",
                           { for: "statusMapper" },
-                          "Status mapper",
+                          "Status Mapper",
                         ),
                         m("textarea.form-control", {
                           id: "statusMapper",
                           rows: "4",
                           placeholder:
                             '{"parameter":"state","mapping":{"approved":"APPROVED","rejected":"REJECTED"}}',
-                          value: coreCampaignModel.form.statusMapperText,
+                          value: this.campaignModel.form.statusMapperText,
                           oninput: function (event) {
-                            coreCampaignModel.form.statusMapperText =
+                            this.campaignModel.form.statusMapperText =
                               event.target.value;
-                          },
+                          }.bind(this),
                         }),
                         m(
                           ".form-text",
@@ -203,37 +208,40 @@ let CoreCampaign = {
                 m(
                   "a.btn.btn-primary.btn-sm",
                   {
-                    href: coreCampaignModel.campaignId
-                      && coreCampaignModel.campaignId !== "new"
-                      ? `#!/core/campaigns/${coreCampaignModel.campaignId}/flows/new`
+                    href: this.campaignModel.campaignId
+                      && this.campaignModel.campaignId !== "new"
+                      ? `#!/core/campaigns/${this.campaignModel.campaignId}/flows/new`
                       : "#",
                     disabled:
-                      !coreCampaignModel.campaignId
-                      || coreCampaignModel.campaignId === "new",
+                      !this.campaignModel.campaignId
+                      || this.campaignModel.campaignId === "new",
                   },
                   "New Flow",
                 ),
               ],
             ),
-            coreFlowsModel.isLoading
+            this.flowsModel.isLoading
               ? m("div", "Loading flows...")
               : [
-                  coreFlowsModel.error
-                    ? m(".alert.alert-danger", coreFlowsModel.error)
+                  this.flowsModel.error
+                    ? m(".alert.alert-danger", this.flowsModel.error)
                     : null,
                   m(Flows, {
-                    campaignId: coreCampaignModel.campaignId,
-                    flows: coreFlowsModel.items,
+                    campaignId: this.campaignModel.campaignId,
+                    flows: this.flowsModel.items,
                     onReorder: function (mapping) {
-                      coreFlowsModel.updateOrderBulk(coreCampaignModel.campaignId, mapping);
-                    }
+                      this.flowsModel.updateOrderBulk(
+                        this.campaignModel.campaignId,
+                        mapping,
+                      );
+                    }.bind(this),
                   }),
                 ],
           ]),
         ]),
       ]),
     );
-  },
-};
+  }
+}
 
-module.exports = CoreCampaign;
+module.exports = CoreCampaignView;

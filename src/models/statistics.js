@@ -1,53 +1,59 @@
 const m = require("mithril");
-const auth = require("./auth");
 
-var   Filter = {
-  from: null,
-  to: null,
-  campaignId: null,
-  groupBy: null,
+class StatisticsFilter {
+  constructor() {
+    this.from = null;
+    this.to = null;
+    this.campaignId = null;
+    this.groupBy = null;
+  }
 
-  isReady: function () {
-    return (
-      Filter.from !== null && Filter.to !== null && Filter.campaignId !== null
-    );
-  },
-  periodStart: function () {
-    return Math.trunc(Date.parse(Filter.from) / 1000);
-  },
-  periodEnd: function () {
-    return Math.trunc(Date.parse(Filter.to) / 1000);
-  },
-};
+  isReady() {
+    return this.from !== null && this.to !== null && this.campaignId !== null;
+  }
 
-var Statistics = {
-  filter: Filter,
-  report: null,
-  fetch: function () {
-    if (!Statistics.filter.isReady()) {
+  periodStart() {
+    return Math.trunc(Date.parse(this.from) / 1000);
+  }
+
+  periodEnd() {
+    return Math.trunc(Date.parse(this.to) / 1000);
+  }
+}
+
+class StatisticsModel {
+  constructor(auth) {
+    this.auth = auth;
+    this.filter = new StatisticsFilter();
+    this.report = null;
+    this.parameters = null;
+  }
+
+  fetch() {
+    if (!this.filter.isReady()) {
       return;
     }
 
     var parameters = {
-      periodStart: Statistics.filter.periodStart(),
-      periodEnd: Statistics.filter.periodEnd(),
-      campaignId: Statistics.filter.campaignId,
-    }
+      periodStart: this.filter.periodStart(),
+      periodEnd: this.filter.periodEnd(),
+      campaignId: this.filter.campaignId,
+    };
 
-    if (Statistics.filter.groupBy) {
-      parameters.groupParameters = Statistics.filter.groupBy;
+    if (this.filter.groupBy) {
+      parameters.groupParameters = this.filter.groupBy;
     }
 
     m.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/reports/base`,
-      headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      headers: { Authorization: `Basic ${this.auth.token}` },
       params: parameters,
     }).then(function (payload) {
-      Statistics.report = payload["content"]["report"];
-      Statistics.parameters = payload["content"]["parameters"];
-    });
-  },
-};
+      this.report = payload.content.report;
+      this.parameters = payload.content.parameters;
+    }.bind(this));
+  }
+}
 
-module.exports = Statistics;
+module.exports = StatisticsModel;

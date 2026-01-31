@@ -1,85 +1,87 @@
 const m = require("mithril");
-const auth = require("./auth");
 
-const CoreCampaign = {
-  campaignId: null,
-  isLoading: false,
-  error: null,
-  successMessage: null,
-  lastLoaded: null,
-  form: {
-    name: "",
-    costModel: "cpc",
-    costValue: "",
-    currency: "usd",
-    statusMapperText: "",
-  },
+class CoreCampaignModel {
+  constructor(auth) {
+    this.auth = auth;
+    this.campaignId = null;
+    this.isLoading = false;
+    this.error = null;
+    this.successMessage = null;
+    this.lastLoaded = null;
+    this.form = {
+      name: "",
+      costModel: "cpc",
+      costValue: "",
+      currency: "usd",
+      statusMapperText: "",
+    };
+  }
 
-  setFormValues: function (payload) {
-    CoreCampaign.form.name = payload.name || "";
-    CoreCampaign.form.costModel = payload.costModel || "cpc";
-    CoreCampaign.form.costValue = payload.costValue || "";
-    CoreCampaign.form.currency = payload.currency || "usd";
-    CoreCampaign.form.statusMapperText = payload.statusMapper
+  setFormValues(payload) {
+    this.form.name = payload.name || "";
+    this.form.costModel = payload.costModel || "cpc";
+    this.form.costValue = payload.costValue || "";
+    this.form.currency = payload.currency || "usd";
+    this.form.statusMapperText = payload.statusMapper
       ? JSON.stringify(payload.statusMapper, null, 2)
       : "";
-  },
+  }
 
-  resetForm: function () {
-    if (CoreCampaign.lastLoaded) {
-      CoreCampaign.setFormValues(CoreCampaign.lastLoaded);
+  resetForm() {
+    if (this.lastLoaded) {
+      this.setFormValues(this.lastLoaded);
     } else {
-      CoreCampaign.setFormValues({});
+      this.setFormValues({});
     }
-  },
+  }
 
-  fetch: function (campaignId) {
-    CoreCampaign.error = null;
-    CoreCampaign.successMessage = null;
-    CoreCampaign.lastLoaded = null;
-    CoreCampaign.isLoading = true;
-    CoreCampaign.campaignId = campaignId;
+  fetch(campaignId) {
+    this.error = null;
+    this.successMessage = null;
+    this.lastLoaded = null;
+    this.isLoading = true;
+    this.campaignId = campaignId;
 
     m.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
-      headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      headers: { Authorization: `Basic ${this.auth.token}` },
     })
       .then(function (payload) {
-        CoreCampaign.lastLoaded = payload;
-        CoreCampaign.setFormValues(payload);
-        CoreCampaign.isLoading = false;
-      })
+        this.lastLoaded = payload;
+        this.setFormValues(payload);
+        this.isLoading = false;
+      }.bind(this))
       .catch(function () {
-        CoreCampaign.error = "Failed to load campaign details.";
-        CoreCampaign.isLoading = false;
-      });
-  },
+        this.error = "Failed to load campaign details.";
+        this.isLoading = false;
+      }.bind(this));
+  }
 
-  validate: function () {
-    if (!CoreCampaign.form.name.trim()) {
+  validate() {
+    if (!this.form.name.trim()) {
       return "Name is required.";
     }
 
-    if (!CoreCampaign.form.costModel) {
+    if (!this.form.costModel) {
       return "Cost model is required.";
     }
 
-    if (!CoreCampaign.form.currency) {
+    if (!this.form.currency) {
       return "Currency is required.";
     }
 
-    if (CoreCampaign.form.costValue === "") {
+    if (this.form.costValue === "") {
       return "Cost value is required.";
     }
 
-    if (Number.isNaN(Number(CoreCampaign.form.costValue))) {
+    if (Number.isNaN(Number(this.form.costValue))) {
       return "Cost value must be a number.";
     }
 
-    if (CoreCampaign.form.statusMapperText.trim().length > 0) {
+    if (this.form.statusMapperText.trim().length > 0) {
       try {
-        let parsed = JSON.parse(CoreCampaign.form.statusMapperText);
+        let parsed = JSON.parse(this.form.statusMapperText);
 
         if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
           return "Status mapper must be an object with parameter and mapping.";
@@ -90,9 +92,9 @@ const CoreCampaign = {
         }
 
         if (
-          parsed.mapping === null ||
-          typeof parsed.mapping !== "object" ||
-          Array.isArray(parsed.mapping)
+          parsed.mapping === null
+          || typeof parsed.mapping !== "object"
+          || Array.isArray(parsed.mapping)
         ) {
           return "Status mapper mapping must be an object.";
         }
@@ -114,63 +116,63 @@ const CoreCampaign = {
     }
 
     return null;
-  },
+  }
 
-  buildPayload: function () {
+  buildPayload() {
     let statusMapper = null;
-    let statusMapperText = CoreCampaign.form.statusMapperText.trim();
+    let statusMapperText = this.form.statusMapperText.trim();
 
     if (statusMapperText.length > 0) {
       statusMapper = JSON.parse(statusMapperText);
     }
 
     return {
-      name: CoreCampaign.form.name.trim(),
-      costModel: CoreCampaign.form.costModel,
-      costValue: Number(CoreCampaign.form.costValue),
-      currency: CoreCampaign.form.currency,
+      name: this.form.name.trim(),
+      costModel: this.form.costModel,
+      costValue: Number(this.form.costValue),
+      currency: this.form.currency,
       statusMapper: statusMapper,
     };
-  },
+  }
 
-  save: function () {
-    CoreCampaign.error = null;
-    CoreCampaign.successMessage = null;
+  save() {
+    this.error = null;
+    this.successMessage = null;
 
-    let validationError = CoreCampaign.validate();
+    let validationError = this.validate();
     if (validationError) {
-      CoreCampaign.error = validationError;
+      this.error = validationError;
       return;
     }
 
-    let payload = CoreCampaign.buildPayload();
+    let payload = this.buildPayload();
 
-    let isNew = CoreCampaign.campaignId === "new";
+    let isNew = this.campaignId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
       ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns`
-      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreCampaign.campaignId}`;
+      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}`;
 
     m.request({
       method: method,
       url: url,
-      headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      headers: { Authorization: `Basic ${this.auth.token}` },
       body: payload,
     })
       .then(function () {
-        CoreCampaign.successMessage = isNew
+        this.successMessage = isNew
           ? "Campaign created successfully."
           : "Campaign updated successfully.";
         setTimeout(function () {
           m.route.set("/core/campaigns");
         }, 2000);
-      })
+      }.bind(this))
       .catch(function () {
-        CoreCampaign.error = isNew
+        this.error = isNew
           ? "Failed to create campaign."
           : "Failed to update campaign.";
-      });
-  },
-};
+      }.bind(this));
+  }
+}
 
-module.exports = CoreCampaign;
+module.exports = CoreCampaignModel;

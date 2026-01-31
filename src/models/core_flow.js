@@ -1,117 +1,143 @@
 const m = require("mithril");
-const auth = require("./auth");
 
-const CoreFlow = {
-  flowId: null,
-  campaignId: null,
-  isLoading: false,
-  error: null,
-  successMessage: null,
-  lastLoaded: null,
-  form: {
-    name: null,
-    rule: null,
-    actionType: "redirect",
-    redirectUrl: null,
-    landingArchive: null,
-    landingPath: null,
-    orderValue: null,
-    isEnabled: true,
-  },
+class CoreFlowModel {
+  constructor(auth) {
+    this.auth = auth;
+    this.flowId = null;
+    this.campaignId = null;
+    this.isLoading = false;
+    this.error = null;
+    this.successMessage = null;
+    this.lastLoaded = null;
+    this.form = {
+      name: null,
+      rule: null,
+      actionType: "redirect",
+      redirectUrl: null,
+      landingArchive: null,
+      landingPath: null,
+      orderValue: null,
+      isEnabled: true,
+    };
+  }
 
-  setFormValues: function (payload) {
-    CoreFlow.form.name = payload.name || "";
-    CoreFlow.form.rule = payload.rule || "";
-    CoreFlow.form.actionType = payload.actionType || "redirect";
-    CoreFlow.form.redirectUrl = payload.redirectUrl || "";
-    CoreFlow.form.landingArchive = null;
-    CoreFlow.form.landingPath = payload.landingPath || "";
-    CoreFlow.form.orderValue =
+  setFormValues(payload) {
+    this.form.name = payload.name || "";
+    this.form.rule = payload.rule || "";
+    this.form.actionType = payload.actionType || "redirect";
+    this.form.redirectUrl = payload.redirectUrl || "";
+    this.form.landingArchive = null;
+    this.form.landingPath = payload.landingPath || "";
+    this.form.orderValue =
       payload.orderValue !== null && payload.orderValue !== undefined
         ? String(payload.orderValue)
         : "0";
-    CoreFlow.form.isEnabled = Boolean(payload.isEnabled);
-  },
+    this.form.isEnabled = Boolean(payload.isEnabled);
+  }
 
-  resetForm: function () {
-    if (CoreFlow.lastLoaded) {
-      CoreFlow.setFormValues(CoreFlow.lastLoaded);
+  resetForm() {
+    if (this.lastLoaded) {
+      this.setFormValues(this.lastLoaded);
     } else {
-      CoreFlow.setFormValues({});
-      CoreFlow.form.orderValue = "0";
-      CoreFlow.form.isEnabled = true;
+      this.setFormValues({});
+      this.form.orderValue = "0";
+      this.form.isEnabled = true;
     }
-  },
+  }
 
-  fetch: function (flowId, campaignId) {
-    CoreFlow.flowId = null;
-    CoreFlow.campaignId = campaignId;
-    CoreFlow.error = null;
-    CoreFlow.successMessage = null;
-    CoreFlow.lastLoaded = null;
-    CoreFlow.isLoading = true;
+  fetch(flowId, campaignId) {
+    if (!flowId) {
+      this.error = "Bad flow id.";
+      return;
+    }
+
+    this.flowId = null;
+    this.campaignId = campaignId;
+    this.error = null;
+    this.successMessage = null;
+    this.lastLoaded = null;
+    this.isLoading = true;
+
+    if (flowId === "new") {
+      if (campaignId === undefined || campaignId === null || campaignId === "") {
+        this.error = "Campaign ID is required.";
+        this.isLoading = false;
+        return;
+      }
+      this.flowId = flowId;
+      this.isLoading = false;
+      this.resetForm();
+      return;
+    }
+
+    if (campaignId === undefined || campaignId === null || campaignId === "") {
+      this.error = "Campaign ID is required.";
+      this.isLoading = false;
+      return;
+    }
 
     m.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/${flowId}`,
-      headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      headers: { Authorization: `Basic ${this.auth.token}` },
     })
       .then(function (payload) {
-        CoreFlow.flowId = flowId;
-        CoreFlow.lastLoaded = payload;
-        CoreFlow.setFormValues(payload);
-        CoreFlow.isLoading = false;
-      })
+        this.flowId = flowId;
+        this.lastLoaded = payload;
+        this.setFormValues(payload);
+        this.isLoading = false;
+      }.bind(this))
       .catch(function () {
-        CoreFlow.error = "Failed to load flow details.";
-        CoreFlow.isLoading = false;
-      });
-  },
+        this.error = "Failed to load flow details.";
+        this.isLoading = false;
+      }.bind(this));
+  }
 
-  validate: function () {
-    if (!CoreFlow.form.name.trim()) {
+  validate() {
+    if (!this.form.name.trim()) {
       return "Name is required.";
     }
 
-    if (!CoreFlow.form.rule.trim()) {
+    if (!this.form.rule.trim()) {
       return "Rule is required.";
     }
 
-    if (!CoreFlow.form.actionType) {
+    if (!this.form.actionType) {
       return "Action type is required.";
     }
 
-    if (CoreFlow.form.actionType === "redirect") {
-      try {
-        new URL(CoreFlow.form.redirectUrl.trim());
-      } catch (error) {
-        return "Redirect URL must be a valid URL.";
+    if (this.form.actionType === "redirect") {
+      let redirectUrl = (this.form.redirectUrl || "").trim();
+      if (redirectUrl) {
+        try {
+          new URL(redirectUrl);
+        } catch (error) {
+          return "Redirect URL must be a valid URL.";
+        }
       }
     }
 
-    if (CoreFlow.form.actionType === "render" && !CoreFlow.form.landingArchive) {
+    if (this.form.actionType === "render" && !this.form.landingArchive) {
       return "Landing archive is required.";
     }
 
     return null;
-  },
+  }
 
-  buildPayload: function () {
-    let payload = {
-      name: CoreFlow.form.name.trim(),
-      rule: CoreFlow.form.rule.trim(),
-      actionType: CoreFlow.form.actionType,
+  buildPayload() {
+    return {
+      name: this.form.name.trim(),
+      rule: this.form.rule.trim(),
+      actionType: this.form.actionType,
       redirectUrl:
-        CoreFlow.form.actionType === "redirect"
-          ? CoreFlow.form.redirectUrl.trim() || null
+        this.form.actionType === "redirect"
+          ? this.form.redirectUrl.trim() || null
           : null,
-      isEnabled: CoreFlow.form.isEnabled,
+      isEnabled: this.form.isEnabled,
     };
+  }
 
-    return payload;
-  },
-
-  buildFormData: function (payload) {
+  buildFormData(payload) {
     let formData = new FormData();
 
     Object.keys(payload).forEach(function (key) {
@@ -120,55 +146,64 @@ const CoreFlow = {
       }
     });
 
-    if (CoreFlow.form.landingArchive) {
-      formData.append("landingArchive", CoreFlow.form.landingArchive);
+    if (this.form.landingArchive) {
+      formData.append("landingArchive", this.form.landingArchive);
     }
 
     return formData;
-  },
+  }
 
-  save: function () {
-    CoreFlow.error = null;
-    CoreFlow.successMessage = null;
+  save() {
+    this.error = null;
+    this.successMessage = null;
 
-    let validationError = CoreFlow.validate();
+    let validationError = this.validate();
     if (validationError) {
-      CoreFlow.error = validationError;
+      this.error = validationError;
       return;
     }
 
-    let payload = CoreFlow.buildPayload();
-    let isNew = CoreFlow.flowId === "new";
+    if (this.campaignId === null || this.campaignId === "") {
+      this.error = "Campaign ID is required.";
+      return;
+    }
+
+    let payload = this.buildPayload();
+    let isNew = this.flowId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.campaignId}/flows`
-      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${CoreFlow.campaignId}/flows/${CoreFlow.flowId}`;
+      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows`
+      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${this.flowId}`;
 
     m.request(
       {
         method: method,
         url: url,
-        headers: { Authorization: `Basic ${auth.Authentication.token}` },
-        body: CoreFlow.buildFormData(payload),
+        headers: { Authorization: `Basic ${this.auth.token}` },
+        body: this.buildFormData(payload),
         serialize: function (value) {
           return value;
         },
       },
     )
       .then(function () {
-        CoreFlow.successMessage = isNew
+        this.successMessage = isNew
           ? "Flow created successfully."
           : "Flow updated successfully.";
         setTimeout(function () {
-            m.route.set(`/core/campaigns/${CoreFlow.campaignId}`);
-        }, 2000);
-      })
+          if (this.campaignId) {
+            m.route.set(`/core/campaigns/${this.campaignId}`);
+          } else {
+            m.route.set("/core/campaigns");
+          }
+        }.bind(this), 2000);
+      }.bind(this))
       .catch(function () {
-        CoreFlow.error = isNew
+        this.error = isNew
           ? "Failed to create flow."
           : "Failed to update flow.";
-      });
-  },
-};
+      }.bind(this));
+  }
+}
 
-module.exports = CoreFlow;
+module.exports = CoreFlowModel;

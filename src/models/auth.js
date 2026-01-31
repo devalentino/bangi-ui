@@ -43,58 +43,60 @@ function clearCredentials() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-var Authentication = {
-  username: null,
-  password: null,
-  isAuthenticated: false,
-  token: null,
+class AuthModel {
+  constructor() {
+    this.username = null;
+    this.password = null;
+    this.isAuthenticated = false;
+    this.token = null;
 
-  signIn: function (username, password) {
-    Authentication.username = username;
-    Authentication.password = password;
+    var storedCredentials = loadStoredCredentials();
+    if (storedCredentials) {
+      this.username = storedCredentials.username;
+      this.password = storedCredentials.password;
+      this.token = btoa(
+        this.username + ":" + this.password,
+      );
+      this.isAuthenticated = true;
+    }
+  }
 
-    Authentication.token = btoa(
-      `${Authentication.username}:${Authentication.password}`,
+  signIn(username, password) {
+    this.username = username;
+    this.password = password;
+
+    this.token = btoa(
+      this.username + ":" + this.password,
     );
 
     m.request({
       method: "POST",
-      url: `${process.env.BACKEND_API_BASE_URL}/auth/authenticate`,
-      headers: { Authorization: `Basic ${Authentication.token}` },
+      url: process.env.BACKEND_API_BASE_URL + "/auth/authenticate",
+      headers: { Authorization: "Basic " + this.token },
     })
-      .then(function (result) {
-        Authentication.isAuthenticated = true;
+      .then(function () {
+        this.isAuthenticated = true;
         persistCredentials(username, password);
         m.route.set("");
-      })
+      }.bind(this))
       .catch(function () {
         alert("Failed to authenticate");
-        Authentication.isAuthenticated = false;
-        Authentication.token = null;
+        this.isAuthenticated = false;
+        this.token = null;
         clearCredentials();
         m.route.set("");
-      });
-  },
+      }.bind(this));
+  }
 
-  signOut: function () {
-    Authentication.username = null;
-    Authentication.password = null;
-    Authentication.isAuthenticated = false;
-    Authentication.token = null;
+  signOut() {
+    this.username = null;
+    this.password = null;
+    this.isAuthenticated = false;
+    this.token = null;
     clearCredentials();
     m.route.set("");
     alert("Signed out");
-  },
-};
-
-var storedCredentials = loadStoredCredentials();
-if (storedCredentials) {
-  Authentication.username = storedCredentials.username;
-  Authentication.password = storedCredentials.password;
-  Authentication.token = btoa(
-    `${Authentication.username}:${Authentication.password}`,
-  );
-  Authentication.isAuthenticated = true;
+  }
 }
 
-module.exports = { Authentication };
+module.exports = AuthModel;

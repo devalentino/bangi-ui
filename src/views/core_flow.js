@@ -1,28 +1,32 @@
 let m = require("mithril");
-let coreFlowModel = require("../models/core_flow");
+let CoreFlowModel = require("../models/core_flow");
 
-let CoreFlow = {
-  oninit: function () {
+class CoreFlowView {
+  constructor(vnode) {
+    this.auth = vnode.attrs.auth;
+    this.model = new CoreFlowModel(this.auth);
+  }
+
+  oninit() {
+    this.model.fetch(
+      m.route.param("flowId"),
+      m.route.param("campaignId"),
+    );
+  }
+
+  onbeforeupdate() {
     let flowId = m.route.param("flowId");
     let campaignId = m.route.param("campaignId");
-
-    if (flowId !== "new") {
-      coreFlowModel.fetch(flowId, campaignId);
-    }
-  },
-  onbeforeupdate: function () {
-    let flowId = m.route.param("flowId");
-    let campaignId = m.route.param("campaignId");
-
     if (
-      flowId && flowId !== "new"
-      && (flowId !== coreFlowModel.flowId || campaignId !== coreFlowModel.campaignId)
+      flowId
+      && (flowId !== this.model.flowId || campaignId !== this.model.campaignId)
     ) {
-      coreFlowModel.fetch(flowId, campaignId);
+      this.model.fetch(flowId, campaignId);
     }
-  },
-  view: function () {
-    let isNew = coreFlowModel.flowId === "new";
+  }
+
+  view() {
+    let isNew = this.model.flowId === "new";
 
     return m(
       ".container-fluid.pt-4.px-4",
@@ -30,32 +34,32 @@ let CoreFlow = {
         m(".col-12.col-xl-6", [
           m(".bg-light.rounded.h-100.p-4", [
             m("h6.mb-4", isNew ? "New Flow" : "Flow Modification"),
-            coreFlowModel.isLoading
+            this.model.isLoading
               ? m("div", "Loading flow...")
               : [
-                  coreFlowModel.error
-                    ? m(".alert.alert-danger", coreFlowModel.error)
+                  this.model.error
+                    ? m(".alert.alert-danger", this.model.error)
                     : null,
-                  coreFlowModel.successMessage
-                    ? m(".alert.alert-success", coreFlowModel.successMessage)
+                  this.model.successMessage
+                    ? m(".alert.alert-success", this.model.successMessage)
                     : null,
                   m(
                     "form",
                     {
                       onsubmit: function (event) {
                         event.preventDefault();
-                        coreFlowModel.save();
-                      },
+                        this.model.save();
+                      }.bind(this),
                       onreset: function (event) {
                         event.preventDefault();
-                        coreFlowModel.resetForm();
-                      },
+                        this.model.resetForm();
+                      }.bind(this),
                     },
                     [
                       m("input.form-control", {
                         type: "hidden",
                         id: "orderValue",
-                        value: coreFlowModel.form.orderValue || "0",
+                        value: this.model.form.orderValue || "0",
                         oninput: function () {},
                       }),
                       m(".row.g-3", [
@@ -65,10 +69,10 @@ let CoreFlow = {
                             type: "text",
                             id: "flowName",
                             placeholder: "Enter flow name",
-                            value: coreFlowModel.form.name,
+                            value: this.model.form.name,
                             oninput: function (event) {
-                              coreFlowModel.form.name = event.target.value;
-                            },
+                              this.model.form.name = event.target.value;
+                            }.bind(this),
                           }),
                         ]),
                         m(".col-sm-12", [
@@ -79,13 +83,13 @@ let CoreFlow = {
                                 {
                                   type: "button",
                                   class:
-                                    coreFlowModel.form.actionType === "redirect"
+                                    this.model.form.actionType === "redirect"
                                       ? "active"
                                       : "",
                                   onclick: function () {
-                                    coreFlowModel.form.actionType = "redirect";
-                                    coreFlowModel.form.landingArchive = null;
-                                  },
+                                    this.model.form.actionType = "redirect";
+                                    this.model.form.landingArchive = null;
+                                  }.bind(this),
                                 },
                                 "Redirect",
                               ),
@@ -96,13 +100,13 @@ let CoreFlow = {
                                 {
                                   type: "button",
                                   class:
-                                    coreFlowModel.form.actionType === "render"
+                                    this.model.form.actionType === "render"
                                       ? "active"
                                       : "",
                                   onclick: function () {
-                                    coreFlowModel.form.actionType = "render";
-                                    coreFlowModel.form.redirectUrl = null;
-                                  },
+                                    this.model.form.actionType = "render";
+                                    this.model.form.redirectUrl = null;
+                                  }.bind(this),
                                 },
                                 "Render",
                               ),
@@ -112,7 +116,7 @@ let CoreFlow = {
                       ]),
                       m(".row.g-3.mt-1", [
                         m(".col-sm-12.col-md-6", [
-                          coreFlowModel.form.actionType === "redirect"
+                          this.model.form.actionType === "redirect"
                             ? [
                                 m(
                                   "label.form-label",
@@ -123,11 +127,11 @@ let CoreFlow = {
                                   type: "url",
                                   id: "redirectUrl",
                                   placeholder: "https://example.com",
-                                  value: coreFlowModel.form.redirectUrl,
+                                  value: this.model.form.redirectUrl,
                                   oninput: function (event) {
-                                    coreFlowModel.form.redirectUrl =
+                                    this.model.form.redirectUrl =
                                       event.target.value;
-                                  },
+                                  }.bind(this),
                                 }),
                               ]
                             : [
@@ -140,14 +144,14 @@ let CoreFlow = {
                                   type: "file",
                                   id: "renderFile",
                                   onchange: function (event) {
-                                    coreFlowModel.form.landingArchive =
+                                    this.model.form.landingArchive =
                                       event.target.files[0] || null;
-                                  },
+                                  }.bind(this),
                                 }),
                                 m("label.form-label mt-3", "Landing path"),
                                 m(
                                   "div.form-control-plaintext",
-                                  coreFlowModel.form.landingPath || "-",
+                                  this.model.form.landingPath || "-",
                                 ),
                               ],
                         ]),
@@ -158,20 +162,20 @@ let CoreFlow = {
                           id: "flowRule",
                           rows: "4",
                           placeholder: "Enter flow rule",
-                          value: coreFlowModel.form.rule,
+                          value: this.model.form.rule,
                           oninput: function (event) {
-                            coreFlowModel.form.rule = event.target.value;
-                          },
+                            this.model.form.rule = event.target.value;
+                          }.bind(this),
                         }),
                       ]),
                       m(".form-check.mt-3", [
                         m("input.form-check-input", {
                           type: "checkbox",
                           id: "isEnabled",
-                          checked: coreFlowModel.form.isEnabled,
+                          checked: this.model.form.isEnabled,
                           onchange: function (event) {
-                            coreFlowModel.form.isEnabled = event.target.checked;
-                          },
+                            this.model.form.isEnabled = event.target.checked;
+                          }.bind(this),
                         }),
                         m(
                           "label.form-check-label",
@@ -196,7 +200,7 @@ let CoreFlow = {
         ]),
       ]),
     );
-  },
-};
+  }
+}
 
-module.exports = CoreFlow;
+module.exports = CoreFlowView;

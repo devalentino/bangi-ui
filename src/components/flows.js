@@ -18,7 +18,7 @@ let Flows = {
 
     if (typeof Flows.onReorderCallback === "function") {
       let mapping = Object.fromEntries(items.map(function (item, index){
-        return [item.id, items.length - index];
+        return [item.id, index + 1];
       }));
 
       Flows.onReorderCallback(mapping);

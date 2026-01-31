@@ -1,22 +1,31 @@
 let m = require("mithril");
-let coreCampaignsModel = require("../models/core_campaigns");
+let CoreCampaignsModel = require("../models/core_campaigns");
 let Pagination = require("../components/pagination");
 
-let CoreCampaigns = {
-  oninit: function () {
-    coreCampaignsModel.fetch();
-  },
-  onbeforeupdate: function () {
+class CoreCampaignsView {
+  constructor(vnode) {
+    this.auth = vnode.attrs.auth;
+    this.model = new CoreCampaignsModel(this.auth);
+  }
+
+  oninit() {
+    this.model.fetch();
+  }
+
+  onbeforeupdate() {
     let pageUrl = parseInt(m.route.param("page"), 10) || 1;
     let pageSizeUrl = parseInt(m.route.param("pageSize"), 10) || 10;
+    let currentPagination = this.model.pagination || {};
     if (
-      pageUrl !== coreCampaignsModel.pagination.page ||
-      pageSizeUrl !== coreCampaignsModel.pagination.pageSize
+      !this.model.pagination
+      || pageUrl !== currentPagination.page
+      || pageSizeUrl !== currentPagination.pageSize
     ) {
-      coreCampaignsModel.fetch();
+      this.model.fetch();
     }
-  },
-  view: function () {
+  }
+
+  view() {
     return m(
       ".container-fluid.pt-4.px-4",
       m(".row.g-4", [
@@ -33,11 +42,11 @@ let CoreCampaigns = {
                 ),
               ],
             ),
-            coreCampaignsModel.isLoading
+            this.model.isLoading
               ? m("div", "Loading campaigns...")
               : [
-                  coreCampaignsModel.error
-                    ? m(".alert.alert-danger", coreCampaignsModel.error)
+                  this.model.error
+                    ? m(".alert.alert-danger", this.model.error)
                     : null,
                   m(
                     "div.table-responsive",
@@ -54,7 +63,7 @@ let CoreCampaigns = {
                       ),
                       m(
                         "tbody",
-                        coreCampaignsModel.items.length === 0
+                        this.model.items.length === 0
                           ? m("tr", [
                               m(
                                 "td.text-center",
@@ -62,7 +71,7 @@ let CoreCampaigns = {
                                 "No campaigns found.",
                               ),
                             ])
-                          : coreCampaignsModel.items.map(function (campaign) {
+                          : this.model.items.map(function (campaign) {
                               return m("tr", [
                                 m("td", campaign.id),
                                 m(
@@ -81,13 +90,13 @@ let CoreCampaigns = {
                       ),
                     ]),
                   ),
-                  m(Pagination, {pagination: coreCampaignsModel.pagination}),
+                  m(Pagination, { pagination: this.model.pagination }),
                 ],
           ]),
         ]),
       ]),
     );
-  },
-};
+  }
+}
 
-module.exports = CoreCampaigns;
+module.exports = CoreCampaignsView;
