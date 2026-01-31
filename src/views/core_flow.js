@@ -15,7 +15,7 @@ let CoreFlow = {
     let campaignId = m.route.param("campaignId");
 
     if (
-      flowId
+      flowId && flowId !== "new"
       && (flowId !== coreFlowModel.flowId || campaignId !== coreFlowModel.campaignId)
     ) {
       coreFlowModel.fetch(flowId, campaignId);

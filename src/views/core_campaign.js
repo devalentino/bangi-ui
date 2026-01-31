@@ -7,6 +7,7 @@ let CoreCampaign = {
   oninit: function () {
     let campaignId = m.route.param("campaignId");
 
+    coreFlowsModel.items = [];
     if (campaignId && campaignId !== "new") {
       coreCampaignModel.fetch(campaignId);
       coreFlowsModel.fetch(campaignId, {

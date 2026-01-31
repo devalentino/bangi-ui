@@ -52,6 +52,9 @@ let Flows = {
         Flows.items.map(function (flow, index) {
           return m(
             "li.list-group-item.d-flex.align-items-center.justify-content-between",
+            {
+              class: flow.isEnabled ? "" : "flows-item-disabled",
+            },
             [
               m("div", [
                 m(
@@ -62,9 +65,24 @@ let Flows = {
                   },
                   flow.name,
                 ),
-                m("div.small.text-muted", flow.actionType),
+                m(
+                  "div.small.text-muted",
+                  m("i", {
+                    class:
+                      flow.actionType === "render"
+                        ? "fa fa-file-alt"
+                        : "fa fa-external-link-alt",
+                    title: flow.actionType || "Action",
+                  }),
+                ),
               ]),
-              m("span.badge.bg-secondary", `${flow.orderValue}`),
+              m(
+                "span.badge.bg-secondary",
+                m("i", {
+                  class: flow.isEnabled ? "fa fa-check" : "fa fa-ban",
+                  title: flow.isEnabled ? "Enabled" : "Disabled",
+                }),
+              ),
             ],
           );
         }),
