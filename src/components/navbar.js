@@ -1,8 +1,8 @@
 var m = require("mithril");
-var auth = require("../models/auth");
 
-var Navbar = {
-  view: function () {
+class Navbar {
+  view(vnode) {
+    var auth = vnode.attrs.auth;
     return m(
       "nav.navbar.navbar-expand.bg-light.navbar-light.sticky-top.px-4.py-0",
       m(
@@ -27,7 +27,7 @@ var Navbar = {
               {
                 href: "#",
                 onclick: function () {
-                  auth.Authentication.signOut();
+                  auth.signOut();
                 },
               },
               "Log Out",
@@ -36,7 +36,7 @@ var Navbar = {
         ]),
       ),
     );
-  },
-};
+  }
+}
 
 module.exports = Navbar;

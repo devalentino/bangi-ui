@@ -1,11 +1,13 @@
 var m = require("mithril");
-var auth = require("../../src/models/auth");
 
-var username = null;
-var password = null;
+class SignInView {
+  constructor(vnode) {
+    this.auth = vnode.attrs.auth;
+    this.username = "";
+    this.password = "";
+  }
 
-var SignIn = {
-  view: function () {
+  view() {
     return m(
       ".container-fluid",
       m(
@@ -23,8 +25,8 @@ var SignIn = {
                 id: "floatingInput",
                 placeholder: "username",
                 oninput: function (event) {
-                  username = event.target.value;
-                },
+                  this.username = event.target.value;
+                }.bind(this),
               }),
               m("label", { for: "floatingInput" }, "Username"),
             ]),
@@ -34,8 +36,8 @@ var SignIn = {
                 id: "floatingPassword",
                 placeholder: "Password",
                 oninput: function (event) {
-                  password = event.target.value;
-                },
+                  this.password = event.target.value;
+                }.bind(this),
               }),
               m("label", { for: "floatingPassword" }, "Password"),
             ]),
@@ -44,8 +46,8 @@ var SignIn = {
               {
                 type: "submit",
                 onclick: function () {
-                  auth.Authentication.signIn(username, password);
-                },
+                  this.auth.signIn(this.username, this.password);
+                }.bind(this),
               },
               "Sign In",
             ),
@@ -53,7 +55,7 @@ var SignIn = {
         ),
       ),
     );
-  },
-};
+  }
+}
 
-module.exports = { SignIn };
+module.exports = { SignIn: SignInView };

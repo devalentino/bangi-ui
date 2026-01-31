@@ -1,12 +1,17 @@
 var m = require("mithril");
+var Sidebar = require("./sidebar");
+var Navbar = require("./navbar");
 
-var sidebar = require("./sidebar");
-var navbar = require("./navbar");
-
-var AuthenticatedPage = {
-  view: function (vnode) {
-    return [m(sidebar), m(".content", [m(navbar), m(vnode.attrs.page)])];
-  },
-};
+class AuthenticatedPage {
+  view(vnode) {
+    return [
+      m(Sidebar),
+      m(
+        ".content",
+        [m(Navbar, { auth: vnode.attrs.auth }), m(vnode.attrs.page)],
+      ),
+    ];
+  }
+}
 
 module.exports = AuthenticatedPage;

@@ -1,5 +1,7 @@
-var Spinner = {
-  view: function () {
+var m = require("mithril");
+
+class Spinner {
+  view() {
     return m(
       "#spinner",
       {
@@ -12,5 +14,7 @@ var Spinner = {
         m("span.sr-only", "Loading..."),
       ),
     );
-  },
-};
+  }
+}
+
+module.exports = Spinner;

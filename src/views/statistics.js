@@ -1,16 +1,14 @@
 let m = require("mithril");
-let auth = require("../models/auth");
-let statisticsModel = require("../models/statistics");
+let StatisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
-
-let filterAvailableCampaigns = [];
+let api = require("../models/api");
 
 function formatDate(date) {
   return date.toISOString().slice(0, 10);
 }
 
-function setDefaultDateRange() {
-  if (statisticsModel.filter.from && statisticsModel.filter.to) {
+function setDefaultDateRange(model) {
+  if (model.filter.from && model.filter.to) {
     return;
   }
 
@@ -18,8 +16,8 @@ function setDefaultDateRange() {
   let fromDate = new Date(today);
   fromDate.setDate(today.getDate() - 6);
 
-  statisticsModel.filter.from = formatDate(fromDate);
-  statisticsModel.filter.to = formatDate(today);
+  model.filter.from = formatDate(fromDate);
+  model.filter.to = formatDate(today);
 }
 
 function getGroupByKeys(report) {
@@ -64,24 +62,29 @@ function getDays(report) {
   return days;
 }
 
-const Filter = {
-  oninit: function () {
-    setDefaultDateRange();
+class FilterView {
+  constructor(vnode) {
+    this.model = vnode.attrs.model;
+    this.campaigns = [];
+  }
 
-    m.request({
+  oninit() {
+    setDefaultDateRange(this.model);
+
+    api.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
-      headers: {Authorization: `Basic ${auth.Authentication.token}`},
     }).then(function (payload) {
-      filterAvailableCampaigns = payload["content"];
+      this.campaigns = payload.content || [];
 
-      if (filterAvailableCampaigns.length > 0) {
-        statisticsModel.filter.campaignId = filterAvailableCampaigns[0].id;
-        statisticsModel.fetch();
+      if (this.campaigns.length > 0) {
+        this.model.filter.campaignId = this.campaigns[0].id;
+        this.model.fetch();
       }
-    });
-  },
-  view: function () {
+    }.bind(this));
+  }
+
+  view() {
     return m(
       ".container-fluid.pt-4.px-4",
       m(".row.g-4", [
@@ -97,22 +100,22 @@ const Filter = {
                 ".col-12",
                 m("input.form-control", {
                   type: "date",
-                  value: statisticsModel.filter.from || "",
+                  value: this.model.filter.from || "",
                   oninput: function (event) {
-                    statisticsModel.filter.from = event.target.value;
-                    statisticsModel.fetch();
-                  },
+                    this.model.filter.from = event.target.value;
+                    this.model.fetch();
+                  }.bind(this),
                 }),
               ),
               m(
                 ".col-12",
                 m("input.form-control", {
                   type: "date",
-                  value: statisticsModel.filter.to || "",
+                  value: this.model.filter.to || "",
                   oninput: function (event) {
-                    statisticsModel.filter.to = event.target.value;
-                    statisticsModel.fetch();
-                  },
+                    this.model.filter.to = event.target.value;
+                    this.model.fetch();
+                  }.bind(this),
                 }),
               ),
             ]),
@@ -132,13 +135,13 @@ const Filter = {
                 {
                   "aria-label": "Campaign",
                   oninput: function (event) {
-                    statisticsModel.filter.campaignId = event.target.value;
-                    statisticsModel.fetch();
-                  },
-                  value: statisticsModel.filter.campaignId,
+                    this.model.filter.campaignId = event.target.value;
+                    this.model.fetch();
+                  }.bind(this),
+                  value: this.model.filter.campaignId,
                 },
-                filterAvailableCampaigns.map(function (campaign) {
-                  return m("option", {value: campaign.id}, campaign.name);
+                this.campaigns.map(function (campaign) {
+                  return m("option", { value: campaign.id }, campaign.name);
                 }),
               ),
             ),
@@ -157,20 +160,20 @@ const Filter = {
                 "select.form-select.mb-3",
                 {
                   "aria-label": "Group By",
-                  disabled: statisticsModel.parameters === null,
+                  disabled: this.model.parameters === null,
                   oninput: function (event) {
-                    statisticsModel.filter.groupBy = event.target.value || null;
-                    statisticsModel.fetch();
-                  },
-                  value: statisticsModel.filter.groupBy || "",
+                    this.model.filter.groupBy = event.target.value || null;
+                    this.model.fetch();
+                  }.bind(this),
+                  value: this.model.filter.groupBy || "",
                 },
                 [
-                  m("option", {value: ""}, "Select group"),
+                  m("option", { value: "" }, "Select group"),
                 ].concat(
-                  (statisticsModel.parameters || []).map(function (parameter) {
+                  (this.model.parameters || []).map(function (parameter) {
                     return m(
                       "option",
-                      {value: parameter},
+                      { value: parameter },
                       parameter,
                     );
                   }),
@@ -181,8 +184,8 @@ const Filter = {
         ),
       ]),
     );
-  },
-};
+  }
+}
 
 const Chart = {
   _getClicksFromReport(report, groupByValue, groupByKeys, date) {
@@ -297,14 +300,15 @@ const Chart = {
     return datasets;
   },
 
-  view: function () {
-    if (statisticsModel.report === null) return;
+  view: function (vnode) {
+    let model = vnode.attrs.model;
+    if (model.report === null) return;
 
-    let dates = getDays(statisticsModel.report);
-    let clicksDatasets = Chart._getClicksDatasets(statisticsModel.report, dates);
-    let leadsDatasets = Chart._getLeadsDatasets(statisticsModel.report, dates);
+    let dates = getDays(model.report);
+    let clicksDatasets = Chart._getClicksDatasets(model.report, dates);
+    let leadsDatasets = Chart._getLeadsDatasets(model.report, dates);
     let approvedLeadsDatasets = Chart._getLeadsDatasets(
-      statisticsModel.report,
+      model.report,
       dates,
       "approved"
     );
@@ -501,15 +505,16 @@ const Table = {
     return trs;
   },
 
-  view: function () {
-    if (statisticsModel.report === null) return;
+  view: function (vnode) {
+    let model = vnode.attrs.model;
+    if (model.report === null) return;
 
-    let groupByKeys = getGroupByKeys(statisticsModel.report);
-    let groupByValues = getGroupByValues(statisticsModel.report, groupByKeys);
+    let groupByKeys = getGroupByKeys(model.report);
+    let groupByValues = getGroupByValues(model.report, groupByKeys);
     let groupByKey = groupByKeys.length > 0 ? groupByKeys[0] : null;
-    let days = getDays(statisticsModel.report);
+    let days = getDays(model.report);
 
-    let grouped = this._group(statisticsModel.report, groupByKey, groupByValues, days);
+    let grouped = this._group(model.report, groupByKey, groupByValues, days);
 
     return m(
       "div.container-fluid.pt-4.px-4",
@@ -544,11 +549,19 @@ const Table = {
   },
 };
 
-const Statistics = {
-  view: function () {
-    return [m(Filter), m(Chart), m(Table)];
-  },
-};
+class StatisticsView {
+  constructor() {
+    this.model = new StatisticsModel();
+  }
+
+  view() {
+    return [
+      m(FilterView, { model: this.model }),
+      m(Chart, { model: this.model }),
+      m(Table, { model: this.model }),
+    ];
+  }
+}
 
 function matchesLeadStatus(row, leadStatus) {
   if (!leadStatus) return true;
@@ -556,4 +569,4 @@ function matchesLeadStatus(row, leadStatus) {
   return String(row.lead_status || "").toLowerCase() === leadStatus;
 }
 
-module.exports = Statistics;
+module.exports = StatisticsView;
