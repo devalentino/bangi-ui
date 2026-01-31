@@ -6,22 +6,20 @@ let Flows = require("../components/flows");
 let CoreCampaign = {
   oninit: function () {
     let campaignId = m.route.param("campaignId");
-    coreCampaignModel.fetch(campaignId);
+
     if (campaignId && campaignId !== "new") {
+      coreCampaignModel.fetch(campaignId);
       coreFlowsModel.fetch(campaignId, {
         page: 1,
         pageSize: 1000,
         sortBy: "orderValue",
         sortOrder: "desc"
       });
-    } else {
-      coreFlowsModel.items = [];
-      coreFlowsModel.error = null;
-      coreFlowsModel.isLoading = false;
     }
   },
   onbeforeupdate: function () {
     let campaignId = m.route.param("campaignId");
+
     if (campaignId && campaignId !== coreCampaignModel.campaignId) {
       coreCampaignModel.fetch(campaignId);
       if (campaignId !== "new") {

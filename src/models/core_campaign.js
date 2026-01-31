@@ -39,19 +39,11 @@ const CoreCampaign = {
       return;
     }
 
-    CoreCampaign.campaignId = null;
     CoreCampaign.error = null;
     CoreCampaign.successMessage = null;
     CoreCampaign.lastLoaded = null;
-
-    if (campaignId === "new") {
-      CoreCampaign.isLoading = false;
-      CoreCampaign.resetForm();
-      return;
-    } else {
-      CoreCampaign.isLoading = true;
-      CoreCampaign.campaignId = campaignId;
-    }
+    CoreCampaign.isLoading = true;
+    CoreCampaign.campaignId = campaignId;
 
     m.request({
       method: "GET",
