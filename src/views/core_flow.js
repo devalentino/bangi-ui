@@ -3,13 +3,16 @@ let coreFlowModel = require("../models/core_flow");
 
 let CoreFlow = {
   oninit: function () {
-    coreFlowModel.fetch(m.route.param("flowId"));
+    coreFlowModel.fetch(
+      m.route.param("flowId"),
+      m.route.param("campaignId"),
+    );
     coreFlowModel.loadCampaigns();
   },
   onbeforeupdate: function () {
     let flowId = m.route.param("flowId");
     if (flowId && flowId !== coreFlowModel.flowId) {
-      coreFlowModel.fetch(flowId);
+      coreFlowModel.fetch(flowId, m.route.param("campaignId"));
     }
   },
   view: function () {

@@ -1,14 +1,29 @@
 let m = require("mithril");
 let coreCampaignModel = require("../models/core_campaign");
+let coreFlowsModel = require("../models/core_flows");
+let FlowsOrder = require("../components/flows_order");
 
 let CoreCampaign = {
   oninit: function () {
-    coreCampaignModel.fetch(m.route.param("campaignId"));
+    let campaignId = m.route.param("campaignId");
+    coreCampaignModel.fetch(campaignId);
+    coreFlowsModel.fetch(campaignId, {
+      page: 1,
+      pageSize: 1000,
+      sortBy: "orderValue",
+      sortOrder: "desc"
+    });
   },
   onbeforeupdate: function () {
     let campaignId = m.route.param("campaignId");
     if (campaignId && campaignId !== coreCampaignModel.campaignId) {
       coreCampaignModel.fetch(campaignId);
+      coreFlowsModel.fetch(campaignId, {
+        page: 1,
+        pageSize: 1000,
+        sortBy: "orderValue",
+        sortOrder: "desc"
+      });
     }
   },
   view: function () {
@@ -171,7 +186,17 @@ let CoreCampaign = {
         m(".col-12.col-xl-6", [
           m(".bg-light.rounded.h-100.p-4", [
             m("h6.mb-4", "Flows"),
-            m("div", "flows"),
+            coreFlowsModel.isLoading
+              ? m("div", "Loading flows...")
+              : [
+                  coreFlowsModel.error
+                    ? m(".alert.alert-danger", coreFlowsModel.error)
+                    : null,
+                  m(FlowsOrder, {
+                    campaignId: coreCampaignModel.campaignId,
+                    flows: coreFlowsModel.items
+                  }),
+                ],
           ]),
         ]),
       ]),

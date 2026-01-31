@@ -59,7 +59,7 @@ const CoreFlow = {
       });
   },
 
-  fetch: function (flowId) {
+  fetch: function (flowId, campaignId) {
     if (!flowId) {
       CoreFlow.error = "Bad flow id.";
       return;
@@ -75,6 +75,15 @@ const CoreFlow = {
       CoreFlow.flowId = flowId;
       CoreFlow.isLoading = false;
       CoreFlow.resetForm();
+      if (campaignId !== undefined && campaignId !== null) {
+        CoreFlow.form.campaignId = String(campaignId);
+      }
+      return;
+    }
+
+    if (campaignId === undefined || campaignId === null || campaignId === "") {
+      CoreFlow.error = "Campaign ID is required.";
+      CoreFlow.isLoading = false;
       return;
     }
 
@@ -82,6 +91,7 @@ const CoreFlow = {
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/flows/${flowId}`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      params: { campaignId: campaignId },
     })
       .then(function (payload) {
         CoreFlow.flowId = flowId;
@@ -123,20 +133,12 @@ const CoreFlow = {
 
   buildPayload: function () {
     let payload = {
-      orderValue:
-        CoreFlow.form.orderValue === ""
-          ? null
-          : CoreFlow.form.orderValue,
       name: CoreFlow.form.name.trim(),
       rule: CoreFlow.form.rule.trim(),
       actionType: CoreFlow.form.actionType,
       redirectUrl:
         CoreFlow.form.actionType === "redirect"
           ? CoreFlow.form.redirectUrl.trim() || null
-          : null,
-      landingPath:
-        CoreFlow.form.actionType === "render"
-          ? CoreFlow.form.landingPath.trim() || null
           : null,
       isEnabled: CoreFlow.form.isEnabled,
     };

@@ -6,24 +6,36 @@ const CoreFlows = {
   pagination: null,
   isLoading: false,
   error: null,
+  campaignId: null,
 
-  fetch: function () {
+  updateOrderBulk: function (campaignId, orderMap) {
+    return m.request({
+      method: "PATCH",
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/order`,
+      headers: { Authorization: `Basic ${auth.Authentication.token}` },
+      body: {order: orderMap},
+    });
+  },
+
+  fetch: function (campaignId, params) {
     CoreFlows.isLoading = true;
     CoreFlows.error = null;
 
+    let requestParams = {
+      page: params.page || 1,
+      pageSize: params.pageSize || 1000,
+      sortBy: params.sortBy || "orderValue",
+      sortOrder: params.sortOrder || "desc",
+    };
+
     m.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/flows`,
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
-      params: {
-        page: m.route.param("page") || 1,
-        pageSize: m.route.param("pageSize") || 10,
-        sortBy: m.route.param("sortBy") || "id",
-        sortOrder: m.route.param("sortOrder") || "asc"
-      },
+      params: requestParams,
     })
       .then(function (payload) {
-        CoreFlows.items = payload.content || [];
+        CoreFlows.items = payload.content;
         CoreFlows.pagination = payload.pagination;
         CoreFlows.isLoading = false;
       })

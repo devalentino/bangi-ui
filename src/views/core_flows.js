@@ -4,16 +4,23 @@ let Pagination = require("../components/pagination");
 
 let CoreFlows = {
   oninit: function () {
-    coreFlowsModel.fetch();
+    coreFlowsModel.fetch({ campaignId: m.route.param("campaignId") });
   },
   onbeforeupdate: function () {
     let pageUrl = parseInt(m.route.param("page"), 10) || 1;
     let pageSizeUrl = parseInt(m.route.param("pageSize"), 10) || 10;
+    let campaignId = m.route.param("campaignId");
+    let currentPagination = coreFlowsModel.pagination || {};
     if (
-      pageUrl !== coreFlowsModel.pagination.page ||
-      pageSizeUrl !== coreFlowsModel.pagination.pageSize
+      campaignId !== coreFlowsModel.lastCampaignId
+      || pageUrl !== currentPagination.page
+      || pageSizeUrl !== currentPagination.pageSize
     ) {
-      coreFlowsModel.fetch();
+      coreFlowsModel.fetch({
+        campaignId: campaignId,
+        page: pageUrl,
+        pageSize: pageSizeUrl,
+      });
     }
   },
   view: function () {
@@ -28,7 +35,11 @@ let CoreFlows = {
                 m("h6.mb-0", "Core Flows"),
                 m(
                   "a.btn.btn-primary.btn-sm",
-                  { href: "#!/core/flows/new" },
+                  {
+                    href: m.route.param("campaignId")
+                      ? `#!/core/flows/new?campaignId=${m.route.param("campaignId")}`
+                      : "#!/core/flows/new",
+                  },
                   "New Flow",
                 ),
               ],
@@ -67,7 +78,10 @@ let CoreFlows = {
                                   "td",
                                   m(
                                     "a",
-                                    { href: `#!/core/flows/${flow.id}` },
+                                    {
+                                      href:
+                                        `#!/core/flows/${flow.id}?campaignId=${flow.campaignId}`,
+                                    },
                                     flow.name || flow.id,
                                   ),
                                 ),
