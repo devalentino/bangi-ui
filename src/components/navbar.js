@@ -1,7 +1,7 @@
 var m = require("mithril");
 
-var Navbar = {
-  view: function (vnode) {
+class Navbar {
+  view(vnode) {
     var auth = vnode.attrs.auth;
     return m(
       "nav.navbar.navbar-expand.bg-light.navbar-light.sticky-top.px-4.py-0",
@@ -36,7 +36,7 @@ var Navbar = {
         ]),
       ),
     );
-  },
-};
+  }
+}
 
 module.exports = Navbar;

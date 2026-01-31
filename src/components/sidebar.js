@@ -1,7 +1,7 @@
 var m = require("mithril");
 
-var Sidebar = {
-  view: function () {
+class Sidebar {
+  view() {
     return m(
       ".sidebar.pe-4.pb-3",
       m(
@@ -28,7 +28,7 @@ var Sidebar = {
         ]),
       ),
     );
-  },
-};
+  }
+}
 
 module.exports = Sidebar;

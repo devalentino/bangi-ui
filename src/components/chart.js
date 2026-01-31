@@ -6,33 +6,33 @@ if (ChartColors) {
   ChartJS.register(ChartColors);
 }
 
-function Chart() {
-  this.chartInstance = null;
+class Chart {
+  constructor() {
+    this.chartInstance = null;
+  }
 
-  this.oncreate = function ({ dom, attrs }) {
-    const ctx = dom.getContext("2d");
+  oncreate({ dom, attrs }) {
+    var ctx = dom.getContext("2d");
     this.chartInstance = new ChartJS(ctx, attrs.chartOptions);
-  };
+  }
 
-  this.onupdate = function ({ attrs }) {
+  onupdate({ attrs }) {
     if (this.chartInstance) {
       this.chartInstance.data = attrs.chartOptions.data;
       this.chartInstance.options = attrs.chartOptions.options;
       this.chartInstance.update();
     }
-  };
+  }
 
-  this.onremove = function () {
+  onremove() {
     if (this.chartInstance) {
       this.chartInstance.destroy();
     }
-  };
+  }
 
-  this.view = function () {
+  view() {
     return m("canvas");
-  };
-
-  return this;
-};
+  }
+}
 
 module.exports = Chart;

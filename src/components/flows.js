@@ -1,35 +1,38 @@
 let m = require("mithril");
 let Sortable = require("sortablejs");
 
+class Flows {
+  constructor() {
+    this.items = [];
+    this.onReorderCallback = null;
+  }
 
-let Flows = {
-  items: [],
-  onReorderCallback: null,
-  _reorderItems: function(oldIndex, newIndex) {
+  _reorderItems(oldIndex, newIndex) {
     if (oldIndex === newIndex) {
       return;
     }
 
-    let items = Flows.items.slice();
+    let items = this.items.slice();
 
     let moved = items.splice(oldIndex, 1)[0];
     items.splice(newIndex, 0, moved);
-    Flows.items = items;
+    this.items = items;
 
-    if (typeof Flows.onReorderCallback === "function") {
-      let mapping = Object.fromEntries(items.map(function (item, index){
+    if (typeof this.onReorderCallback === "function") {
+      let mapping = Object.fromEntries(items.map(function (item, index) {
         return [item.id, index + 1];
       }));
 
-      Flows.onReorderCallback(mapping);
+      this.onReorderCallback(mapping);
     }
-  },
-  view: function (vnode) {
-    Flows.items = vnode.attrs.flows;
-    Flows.onReorderCallback = vnode.attrs.onReorder;
+  }
+
+  view(vnode) {
+    this.items = vnode.attrs.flows;
+    this.onReorderCallback = vnode.attrs.onReorder;
     let campaignId = vnode.attrs.campaignId;
 
-    if (Flows.items.length === 0) {
+    if (this.items.length === 0) {
       return m("div.text-muted", "No flows found.");
     }
 
@@ -42,14 +45,14 @@ let Flows = {
         {
           oncreate: function (vnode) {
             Sortable.create(vnode.dom, {
-              onEnd: (e) => {
-                Flows._reorderItems(e.oldIndex, e.newIndex);
+              onEnd: function (e) {
+                this._reorderItems(e.oldIndex, e.newIndex);
                 m.redraw();
-              }
+              }.bind(this),
             });
-          }
+          }.bind(this),
         },
-        Flows.items.map(function (flow, index) {
+        this.items.map(function (flow) {
           return m(
             "li.list-group-item.d-flex.align-items-center.justify-content-between",
             {
@@ -88,7 +91,7 @@ let Flows = {
         }),
       ),
     ]);
-  },
-};
+  }
+}
 
 module.exports = Flows;
