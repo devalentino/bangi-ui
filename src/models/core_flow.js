@@ -44,35 +44,12 @@ const CoreFlow = {
   },
 
   fetch: function (flowId, campaignId) {
-    if (!flowId) {
-      CoreFlow.error = "Bad flow id.";
-      return;
-    }
-
     CoreFlow.flowId = null;
     CoreFlow.campaignId = campaignId;
     CoreFlow.error = null;
     CoreFlow.successMessage = null;
     CoreFlow.lastLoaded = null;
     CoreFlow.isLoading = true;
-
-    if (flowId === "new") {
-      if (campaignId === undefined || campaignId === null || campaignId === "") {
-        CoreFlow.error = "Campaign ID is required.";
-        CoreFlow.isLoading = false;
-        return;
-      }
-      CoreFlow.flowId = flowId;
-      CoreFlow.isLoading = false;
-      CoreFlow.resetForm();
-      return;
-    }
-
-    if (campaignId === undefined || campaignId === null || campaignId === "") {
-      CoreFlow.error = "Campaign ID is required.";
-      CoreFlow.isLoading = false;
-      return;
-    }
 
     m.request({
       method: "GET",

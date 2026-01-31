@@ -34,11 +34,6 @@ const CoreCampaign = {
   },
 
   fetch: function (campaignId) {
-    if (!campaignId) {
-      CoreCampaign.error = "Bad campaign id.";
-      return;
-    }
-
     CoreCampaign.error = null;
     CoreCampaign.successMessage = null;
     CoreCampaign.lastLoaded = null;
