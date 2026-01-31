@@ -194,7 +194,10 @@ let CoreCampaign = {
                     : null,
                   m(FlowsOrder, {
                     campaignId: coreCampaignModel.campaignId,
-                    flows: coreFlowsModel.items
+                    flows: coreFlowsModel.items,
+                    onReorder: function (mapping) {
+                      coreFlowsModel.updateOrderBulk(coreCampaignModel.campaignId, mapping);
+                    }
                   }),
                 ],
           ]),

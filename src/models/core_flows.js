@@ -8,12 +8,12 @@ const CoreFlows = {
   error: null,
   campaignId: null,
 
-  updateOrderBulk: function (campaignId, orderMap) {
+  updateOrderBulk: function (campaignId, orderMapping) {
     return m.request({
       method: "PATCH",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/order`,
       headers: { Authorization: `Basic ${auth.Authentication.token}` },
-      body: {order: orderMap},
+      body: {order: orderMapping},
     });
   },
 
