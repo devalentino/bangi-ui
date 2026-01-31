@@ -1,8 +1,8 @@
 const m = require("mithril");
+const api = require("./api");
 
 class CoreCampaignModel {
-  constructor(auth) {
-    this.auth = auth;
+  constructor() {
     this.campaignId = null;
     this.isLoading = false;
     this.error = null;
@@ -42,10 +42,9 @@ class CoreCampaignModel {
     this.isLoading = true;
     this.campaignId = campaignId;
 
-    m.request({
+    api.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
-      headers: { Authorization: `Basic ${this.auth.token}` },
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -153,10 +152,9 @@ class CoreCampaignModel {
       ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns`
       : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}`;
 
-    m.request({
+    api.request({
       method: method,
       url: url,
-      headers: { Authorization: `Basic ${this.auth.token}` },
       body: payload,
     })
       .then(function () {

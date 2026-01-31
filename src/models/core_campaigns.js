@@ -1,8 +1,8 @@
 const m = require("mithril");
+const api = require("./api");
 
 class CoreCampaignsModel {
-  constructor(auth) {
-    this.auth = auth;
+  constructor() {
     this.items = [];
     this.pagination = null;
     this.isLoading = false;
@@ -13,10 +13,9 @@ class CoreCampaignsModel {
     this.isLoading = true;
     this.error = null;
 
-    m.request({
+    api.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
-      headers: { Authorization: `Basic ${this.auth.token}` },
       params: {
         page: m.route.param("page") || 1,
         pageSize: m.route.param("pageSize") || 10,

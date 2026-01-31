@@ -5,15 +5,15 @@ let Flows = require("../components/flows");
 
 class CoreCampaignView {
   constructor(vnode) {
-    this.auth = vnode.attrs.auth;
-    this.campaignModel = new CoreCampaignModel(this.auth);
-    this.flowsModel = new CoreFlowsModel(this.auth);
+    this.campaignModel = new CoreCampaignModel();
+    this.flowsModel = new CoreFlowsModel();
   }
 
   oninit() {
     let campaignId = m.route.param("campaignId");
-    this.campaignModel.fetch(campaignId);
+
     if (campaignId && campaignId !== "new") {
+      this.campaignModel.fetch(campaignId);
       this.flowsModel.fetch({
         campaignId: campaignId,
         page: 1,
@@ -21,15 +21,12 @@ class CoreCampaignView {
         sortBy: "orderValue",
         sortOrder: "asc",
       });
-    } else {
-      this.flowsModel.items = [];
-      this.flowsModel.error = null;
-      this.flowsModel.isLoading = false;
     }
   }
 
   onbeforeupdate() {
     let campaignId = m.route.param("campaignId");
+
     if (campaignId && campaignId !== this.campaignModel.campaignId) {
       this.campaignModel.fetch(campaignId);
       if (campaignId !== "new") {

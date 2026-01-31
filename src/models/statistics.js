@@ -1,4 +1,5 @@
 const m = require("mithril");
+const api = require("./api");
 
 class StatisticsFilter {
   constructor() {
@@ -22,8 +23,7 @@ class StatisticsFilter {
 }
 
 class StatisticsModel {
-  constructor(auth) {
-    this.auth = auth;
+  constructor() {
     this.filter = new StatisticsFilter();
     this.report = null;
     this.parameters = null;
@@ -44,10 +44,9 @@ class StatisticsModel {
       parameters.groupParameters = this.filter.groupBy;
     }
 
-    m.request({
+    api.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/reports/base`,
-      headers: { Authorization: `Basic ${this.auth.token}` },
       params: parameters,
     }).then(function (payload) {
       this.report = payload.content.report;

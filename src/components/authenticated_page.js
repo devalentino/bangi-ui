@@ -7,13 +7,7 @@ var AuthenticatedPage = {
   view: function (vnode) {
     return [
       m(sidebar),
-      m(
-        ".content",
-        [
-          m(navbar, { auth: vnode.attrs.auth }),
-          m(vnode.attrs.page, vnode.attrs.pageAttrs),
-        ],
-      ),
+      m(".content", [m(navbar, { auth: vnode.attrs.auth }), m(vnode.attrs.page)]),
     ];
   },
 };

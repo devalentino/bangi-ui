@@ -1,6 +1,7 @@
 let m = require("mithril");
 let StatisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
+let api = require("../models/api");
 
 function formatDate(date) {
   return date.toISOString().slice(0, 10);
@@ -64,17 +65,15 @@ function getDays(report) {
 class FilterView {
   constructor(vnode) {
     this.model = vnode.attrs.model;
-    this.auth = vnode.attrs.auth;
     this.campaigns = [];
   }
 
   oninit() {
     setDefaultDateRange(this.model);
 
-    m.request({
+    api.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
-      headers: { Authorization: `Basic ${this.auth.token}` },
     }).then(function (payload) {
       this.campaigns = payload.content || [];
 
@@ -551,14 +550,13 @@ const Table = {
 };
 
 class StatisticsView {
-  constructor(vnode) {
-    this.auth = vnode.attrs.auth;
-    this.model = new StatisticsModel(this.auth);
+  constructor() {
+    this.model = new StatisticsModel();
   }
 
   view() {
     return [
-      m(FilterView, { model: this.model, auth: this.auth }),
+      m(FilterView, { model: this.model }),
       m(Chart, { model: this.model }),
       m(Table, { model: this.model }),
     ];

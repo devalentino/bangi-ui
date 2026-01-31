@@ -3,8 +3,7 @@ let CoreFlowModel = require("../models/core_flow");
 
 class CoreFlowView {
   constructor(vnode) {
-    this.auth = vnode.attrs.auth;
-    this.model = new CoreFlowModel(this.auth);
+    this.model = new CoreFlowModel();
   }
 
   oninit() {

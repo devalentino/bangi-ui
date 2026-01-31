@@ -4,8 +4,7 @@ let Pagination = require("../components/pagination");
 
 class CoreCampaignsView {
   constructor(vnode) {
-    this.auth = vnode.attrs.auth;
-    this.model = new CoreCampaignsModel(this.auth);
+    this.model = new CoreCampaignsModel();
   }
 
   oninit() {

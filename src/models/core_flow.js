@@ -1,8 +1,8 @@
 const m = require("mithril");
+const api = require("./api");
 
 class CoreFlowModel {
-  constructor(auth) {
-    this.auth = auth;
+  constructor() {
     this.flowId = null;
     this.campaignId = null;
     this.isLoading = false;
@@ -76,10 +76,9 @@ class CoreFlowModel {
       return;
     }
 
-    m.request({
+    api.request({
       method: "GET",
       url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/${flowId}`,
-      headers: { Authorization: `Basic ${this.auth.token}` },
     })
       .then(function (payload) {
         this.flowId = flowId;
@@ -175,11 +174,10 @@ class CoreFlowModel {
       ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows`
       : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${this.flowId}`;
 
-    m.request(
+    api.request(
       {
         method: method,
         url: url,
-        headers: { Authorization: `Basic ${this.auth.token}` },
         body: this.buildFormData(payload),
         serialize: function (value) {
           return value;
