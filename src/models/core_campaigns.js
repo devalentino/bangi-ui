@@ -24,7 +24,7 @@ class CoreCampaignsModel {
       },
     })
       .then(function (payload) {
-        this.items = payload.content || [];
+        this.items = payload.content;
         this.pagination = payload.pagination;
         this.isLoading = false;
       }.bind(this))

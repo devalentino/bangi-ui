@@ -2,9 +2,9 @@ const m = require("mithril");
 const api = require("./api");
 
 class CoreFlowModel {
-  constructor() {
-    this.flowId = null;
-    this.campaignId = null;
+  constructor(flowId, campaignId) {
+    this.flowId = flowId;
+    this.campaignId = campaignId;
     this.isLoading = false;
     this.error = null;
     this.successMessage = null;
@@ -45,43 +45,17 @@ class CoreFlowModel {
     }
   }
 
-  fetch(flowId, campaignId) {
-    if (!flowId) {
-      this.error = "Bad flow id.";
-      return;
-    }
-
-    this.flowId = null;
-    this.campaignId = campaignId;
+  fetch() {
     this.error = null;
     this.successMessage = null;
     this.lastLoaded = null;
     this.isLoading = true;
 
-    if (flowId === "new") {
-      if (campaignId === undefined || campaignId === null || campaignId === "") {
-        this.error = "Campaign ID is required.";
-        this.isLoading = false;
-        return;
-      }
-      this.flowId = flowId;
-      this.isLoading = false;
-      this.resetForm();
-      return;
-    }
-
-    if (campaignId === undefined || campaignId === null || campaignId === "") {
-      this.error = "Campaign ID is required.";
-      this.isLoading = false;
-      return;
-    }
-
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/${flowId}`,
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${this.flowId}`,
     })
       .then(function (payload) {
-        this.flowId = flowId;
         this.lastLoaded = payload;
         this.setFormValues(payload);
         this.isLoading = false;

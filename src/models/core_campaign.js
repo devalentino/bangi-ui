@@ -2,8 +2,8 @@ const m = require("mithril");
 const api = require("./api");
 
 class CoreCampaignModel {
-  constructor() {
-    this.campaignId = null;
+  constructor(campaignId) {
+    this.campaignId = campaignId;
     this.isLoading = false;
     this.error = null;
     this.successMessage = null;
@@ -35,16 +35,15 @@ class CoreCampaignModel {
     }
   }
 
-  fetch(campaignId) {
+  fetch() {
     this.error = null;
     this.successMessage = null;
     this.lastLoaded = null;
     this.isLoading = true;
-    this.campaignId = campaignId;
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;

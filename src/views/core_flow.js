@@ -3,24 +3,12 @@ let CoreFlowModel = require("../models/core_flow");
 
 class CoreFlowView {
   constructor(vnode) {
-    this.model = new CoreFlowModel();
+    this.model = new CoreFlowModel(m.route.param("flowId"), m.route.param("campaignId"));
   }
-
   oninit() {
-    this.model.fetch(
-      m.route.param("flowId"),
-      m.route.param("campaignId"),
-    );
-  }
-
-  onbeforeupdate() {
     let flowId = m.route.param("flowId");
-    let campaignId = m.route.param("campaignId");
-    if (
-      flowId
-      && (flowId !== this.model.flowId || campaignId !== this.model.campaignId)
-    ) {
-      this.model.fetch(flowId, campaignId);
+    if (flowId !== "new") {
+      this.model.fetch();
     }
   }
 

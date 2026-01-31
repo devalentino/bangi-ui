@@ -11,19 +11,6 @@ class CoreCampaignsView {
     this.model.fetch();
   }
 
-  onbeforeupdate() {
-    let pageUrl = parseInt(m.route.param("page"), 10) || 1;
-    let pageSizeUrl = parseInt(m.route.param("pageSize"), 10) || 10;
-    let currentPagination = this.model.pagination || {};
-    if (
-      !this.model.pagination
-      || pageUrl !== currentPagination.page
-      || pageSizeUrl !== currentPagination.pageSize
-    ) {
-      this.model.fetch();
-    }
-  }
-
   view() {
     return m(
       ".container-fluid.pt-4.px-4",

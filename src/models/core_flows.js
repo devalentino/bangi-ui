@@ -2,12 +2,12 @@ const m = require("mithril");
 const api = require("./api");
 
 class CoreFlowsModel {
-  constructor() {
+  constructor(campaignId) {
+    this.campaignId = campaignId;
     this.items = [];
     this.pagination = null;
     this.isLoading = false;
     this.error = null;
-    this.campaignId = null;
   }
 
   updateOrderBulk(campaignId, orderMapping) {
@@ -23,18 +23,9 @@ class CoreFlowsModel {
     });
   }
 
-  fetch(options) {
+  fetch(params) {
     this.isLoading = true;
     this.error = null;
-    let params = options || {};
-
-    if (params.campaignId === undefined || params.campaignId === null || params.campaignId === "") {
-      this.isLoading = false;
-      this.error = "Campaign ID is required.";
-      return;
-    }
-
-    this.campaignId = params.campaignId;
 
     let requestParams = {
       page: params.page || 1,
@@ -45,11 +36,11 @@ class CoreFlowsModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${params.campaignId}/flows`,
+      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows`,
       params: requestParams,
     })
       .then(function (payload) {
-        this.items = payload.content || [];
+        this.items = payload.content;
         this.pagination = payload.pagination;
         this.isLoading = false;
       }.bind(this))

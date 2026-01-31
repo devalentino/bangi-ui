@@ -5,43 +5,20 @@ let Flows = require("../components/flows");
 
 class CoreCampaignView {
   constructor(vnode) {
-    this.campaignModel = new CoreCampaignModel();
-    this.flowsModel = new CoreFlowsModel();
+    this.campaignModel = new CoreCampaignModel(m.route.param("campaignId"));
+    this.flowsModel = new CoreFlowsModel(m.route.param("campaignId"));
   }
 
   oninit() {
     let campaignId = m.route.param("campaignId");
-
-    if (campaignId && campaignId !== "new") {
-      this.campaignModel.fetch(campaignId);
+    if (campaignId !== "new") {
+      this.campaignModel.fetch();
       this.flowsModel.fetch({
-        campaignId: campaignId,
         page: 1,
         pageSize: 1000,
         sortBy: "orderValue",
         sortOrder: "asc",
       });
-    }
-  }
-
-  onbeforeupdate() {
-    let campaignId = m.route.param("campaignId");
-
-    if (campaignId && campaignId !== this.campaignModel.campaignId) {
-      this.campaignModel.fetch(campaignId);
-      if (campaignId !== "new") {
-        this.flowsModel.fetch({
-          campaignId: campaignId,
-          page: 1,
-          pageSize: 1000,
-          sortBy: "orderValue",
-          sortOrder: "asc",
-        });
-      } else {
-        this.flowsModel.items = [];
-        this.flowsModel.error = null;
-        this.flowsModel.isLoading = false;
-      }
     }
   }
 
@@ -202,19 +179,16 @@ class CoreCampaignView {
               ".d-flex.align-items-center.justify-content-between.mb-4",
               [
                 m("h6.mb-0", "Flows"),
-                m(
-                  "a.btn.btn-primary.btn-sm",
-                  {
-                    href: this.campaignModel.campaignId
-                      && this.campaignModel.campaignId !== "new"
-                      ? `#!/core/campaigns/${this.campaignModel.campaignId}/flows/new`
-                      : "#",
-                    disabled:
-                      !this.campaignModel.campaignId
-                      || this.campaignModel.campaignId === "new",
-                  },
-                  "New Flow",
-                ),
+                this.campaignModel.campaignId
+                  && this.campaignModel.campaignId !== "new"
+                  ? m(
+                      "a.btn.btn-primary.btn-sm",
+                      {
+                        href: `#!/core/campaigns/${this.campaignModel.campaignId}/flows/new`,
+                      },
+                      "New Flow",
+                    )
+                  : null,
               ],
             ),
             this.flowsModel.isLoading
