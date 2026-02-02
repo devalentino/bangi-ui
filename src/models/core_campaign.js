@@ -14,6 +14,7 @@ class CoreCampaignModel {
       costValue: "",
       currency: "usd",
       statusMapperText: "",
+      internalProcessUrl: "",
     };
   }
 
@@ -25,6 +26,7 @@ class CoreCampaignModel {
     this.form.statusMapperText = payload.statusMapper
       ? JSON.stringify(payload.statusMapper, null, 2)
       : "";
+    this.form.internalProcessUrl = payload.internalProcessUrl || "";
   }
 
   resetForm() {

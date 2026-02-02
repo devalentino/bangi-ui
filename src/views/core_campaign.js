@@ -71,6 +71,17 @@ class CoreCampaignView {
                           }.bind(this),
                         }),
                       ]),
+                      m(".mb-3", [
+                        m(
+                          "label.form-label",
+                          { for: "internalProcessUrl" },
+                          "Internal Process URL",
+                        ),
+                        m(
+                          "#internalProcessUrl.form-control-plaintext",
+                          this.campaignModel.form.internalProcessUrl,
+                        ),
+                      ]),
                       m(".row.g-3", [
                         m(".col-sm-12.col-md-6", [
                           m(
@@ -90,7 +101,10 @@ class CoreCampaignView {
                             },
                             [
                               m("option", { value: "cpc" }, "CPC"),
+                              m("option", { value: "cpm" }, "CPM"),
+                              m("option", { value: "cpl" }, "CPL"),
                               m("option", { value: "cpa" }, "CPA"),
+                              m("option", { value: "cpi" }, "CPI"),
                             ],
                           ),
                         ]),
@@ -132,6 +146,7 @@ class CoreCampaignView {
                             [
                               m("option", { value: "usd" }, "USD"),
                               m("option", { value: "eur" }, "EUR"),
+                              m("option", { value: "uah" }, "UAH"),
                             ],
                           ),
                         ]),
