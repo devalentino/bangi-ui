@@ -28,11 +28,7 @@ class CoreFlowModel {
     this.form.redirectUrl = payload.redirectUrl || "";
     this.form.landingArchive = null;
     this.form.landingPath = payload.landingPath || "";
-    this.form.orderValue =
-      payload.orderValue !== null && payload.orderValue !== undefined
-        ? String(payload.orderValue)
-        : "0";
-    this.form.isEnabled = Boolean(payload.isEnabled);
+    this.form.isEnabled = payload.isEnabled || true;
   }
 
   resetForm() {
@@ -40,8 +36,6 @@ class CoreFlowModel {
       this.setFormValues(this.lastLoaded);
     } else {
       this.setFormValues({});
-      this.form.orderValue = "0";
-      this.form.isEnabled = true;
     }
   }
 
@@ -71,10 +65,6 @@ class CoreFlowModel {
       return "Name is required.";
     }
 
-    if (!this.form.rule.trim()) {
-      return "Rule is required.";
-    }
-
     if (!this.form.actionType) {
       return "Action type is required.";
     }
@@ -100,7 +90,7 @@ class CoreFlowModel {
   buildPayload() {
     return {
       name: this.form.name.trim(),
-      rule: this.form.rule.trim(),
+      rule: this.form.rule ? this.form.rule.trim() : "",
       actionType: this.form.actionType,
       redirectUrl:
         this.form.actionType === "redirect"
@@ -133,11 +123,6 @@ class CoreFlowModel {
     let validationError = this.validate();
     if (validationError) {
       this.error = validationError;
-      return;
-    }
-
-    if (this.campaignId === null || this.campaignId === "") {
-      this.error = "Campaign ID is required.";
       return;
     }
 

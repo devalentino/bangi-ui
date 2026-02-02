@@ -148,12 +148,13 @@ class CoreFlowView {
                         m("textarea.form-control", {
                           id: "flowRule",
                           rows: "4",
-                          placeholder: "Enter flow rule",
+                          placeholder: "Enter flow rule (optional)",
                           value: this.model.form.rule,
                           oninput: function (event) {
                             this.model.form.rule = event.target.value;
                           }.bind(this),
                         }),
+                        m(".form-text", "Optional."),
                       ]),
                       m(".form-check.mt-3", [
                         m("input.form-check-input", {
