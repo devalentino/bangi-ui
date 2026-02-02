@@ -101,7 +101,10 @@ class CoreCampaignView {
                             },
                             [
                               m("option", { value: "cpc" }, "CPC"),
+                              m("option", { value: "cpm" }, "CPM"),
+                              m("option", { value: "cpl" }, "CPL"),
                               m("option", { value: "cpa" }, "CPA"),
+                              m("option", { value: "cpi" }, "CPI"),
                             ],
                           ),
                         ]),
@@ -143,6 +146,7 @@ class CoreCampaignView {
                             [
                               m("option", { value: "usd" }, "USD"),
                               m("option", { value: "eur" }, "EUR"),
+                              m("option", { value: "uah" }, "UAH"),
                             ],
                           ),
                         ]),
