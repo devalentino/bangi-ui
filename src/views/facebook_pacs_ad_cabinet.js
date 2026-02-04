@@ -242,17 +242,6 @@ class FacebookPacsAdCabinetView {
                           "Banned",
                         ),
                       ]),
-                      !isNew
-                        ? m(".mb-3", [
-                            m("label.form-label", "Business Portfolio"),
-                            m(
-                              "div.form-control-plaintext",
-                              this.model.businessPortfolio
-                                ? this.model.businessPortfolio.name
-                                : "—",
-                            ),
-                          ])
-                        : null,
                       m(
                         "button.btn.btn-primary",
                         { type: "submit" },
