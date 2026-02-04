@@ -318,7 +318,14 @@ class FacebookPacsBusinessPortfolioView {
                     : m(
                         "ul.mb-0",
                         this.model.adCabinets.map(function (adCabinet) {
-                          return m("li", adCabinet.name);
+                          return m(
+                            "li",
+                            m(
+                              "a",
+                              { href: `#!/facebook/pacs/ad-cabinets/${adCabinet.id}` },
+                              adCabinet.name,
+                            ),
+                          );
                         }),
                       ),
                 ]),

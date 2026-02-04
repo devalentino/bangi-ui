@@ -101,6 +101,48 @@ class FacebookPacsAdCabinetModel {
           : "Failed to update ad cabinet.";
       }.bind(this));
   }
+
+  searchBusinessPortfolios(query) {
+    let trimmed = query.trim();
+
+    if (!trimmed) {
+      return Promise.resolve([]);
+    }
+
+    return api.request({
+      method: "GET",
+      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios`,
+      params: {
+        page: 1,
+        pageSize: 20,
+        sortBy: "id",
+        sortOrder: "asc",
+        partialName: trimmed,
+      },
+    })
+      .then(function (payload) {
+        let currentId = this.businessPortfolio
+          ? this.businessPortfolio.id
+          : null;
+        return (payload.content || []).filter(function (portfolio) {
+          return !currentId || portfolio.id !== currentId;
+        });
+      }.bind(this));
+  }
+
+  bindBusinessPortfolio(businessPortfolioId) {
+    return api.request({
+      method: "POST",
+      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets/${this.adCabinetId}/business-portfolio/${businessPortfolioId}`,
+    });
+  }
+
+  unbindBusinessPortfolio(businessPortfolioId) {
+    return api.request({
+      method: "DELETE",
+      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets/${this.adCabinetId}/business-portfolio/${businessPortfolioId}`,
+    });
+  }
 }
 
 module.exports = FacebookPacsAdCabinetModel;
