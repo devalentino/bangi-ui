@@ -119,6 +119,7 @@ class FacebookPacsBusinessPortfolioModel {
   }
 
   searchExecutors(query) {
+    let model = this;
     let trimmed = query.trim();
 
     if (!trimmed) {
@@ -137,7 +138,14 @@ class FacebookPacsBusinessPortfolioModel {
       },
     })
       .then(function (payload) {
-        return payload.content;
+        let excludedIds = new Set(
+          (model.executors || []).map(function (executor) {
+            return executor.id;
+          }),
+        );
+        return (payload.content || []).filter(function (executor) {
+          return !excludedIds.has(executor.id);
+        });
       });
   }
 
