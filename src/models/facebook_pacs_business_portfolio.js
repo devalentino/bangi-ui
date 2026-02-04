@@ -104,6 +104,43 @@ class FacebookPacsBusinessPortfolioModel {
       }.bind(this));
   }
 
+  addExecutor(executorId) {
+    return api.request({
+      method: "POST",
+      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/executors/${executorId}`,
+    });
+  }
+
+  removeExecutor(executorId) {
+    return api.request({
+      method: "DELETE",
+      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/executors/${executorId}`,
+    });
+  }
+
+  searchExecutors(query) {
+    let trimmed = query.trim();
+
+    if (!trimmed) {
+      return Promise.resolve([]);
+    }
+
+    return api.request({
+      method: "GET",
+      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/executors`,
+      params: {
+        page: 1,
+        pageSize: 20,
+        sortBy: "id",
+        sortOrder: "asc",
+        partialName: trimmed,
+      },
+    })
+      .then(function (payload) {
+        return payload.content;
+      });
+  }
+
 }
 
 module.exports = FacebookPacsBusinessPortfolioModel;
