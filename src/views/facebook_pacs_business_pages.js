@@ -42,7 +42,7 @@ class FacebookPacsBusinessPagesView {
                         m("tr", [
                           m("th", { scope: "col" }, "ID"),
                           m("th", { scope: "col" }, "Name"),
-                          m("th", { scope: "col" }, "Banned"),
+                          m("th", { scope: "col" }, "Active"),
                         ]),
                       ),
                       m(
@@ -68,7 +68,18 @@ class FacebookPacsBusinessPagesView {
                                     businessPage.name,
                                   ),
                                 ),
-                                m("td", businessPage.isBanned ? "Yes" : "No"),
+                                m(
+                                  "td",
+                                  businessPage.isBanned
+                                    ? m("i", {
+                                        class: "fa fa-ban text-danger",
+                                        title: "Banned",
+                                      })
+                                    : m("i", {
+                                        class: "fa fa-check text-success",
+                                        title: "Active",
+                                      }),
+                                ),
                               ]);
                             }),
                       ),

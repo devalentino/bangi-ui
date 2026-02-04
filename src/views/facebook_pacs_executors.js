@@ -42,7 +42,7 @@ class FacebookPacsExecutorsView {
                         m("tr", [
                           m("th", { scope: "col" }, "ID"),
                           m("th", { scope: "col" }, "Name"),
-                          m("th", { scope: "col" }, "Banned"),
+                          m("th", { scope: "col" }, "Active"),
                         ]),
                       ),
                       m(
@@ -68,7 +68,18 @@ class FacebookPacsExecutorsView {
                                     executor.name,
                                   ),
                                 ),
-                                m("td", executor.isBanned ? "Yes" : "No"),
+                                m(
+                                  "td",
+                                  executor.isBanned
+                                    ? m("i", {
+                                        class: "fa fa-ban text-danger",
+                                        title: "Banned",
+                                      })
+                                    : m("i", {
+                                        class: "fa fa-check text-success",
+                                        title: "Active",
+                                      }),
+                                ),
                               ]);
                             }),
                       ),

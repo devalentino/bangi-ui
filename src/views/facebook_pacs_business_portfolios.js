@@ -42,7 +42,7 @@ class FacebookPacsBusinessPortfoliosView {
                         m("tr", [
                           m("th", { scope: "col" }, "ID"),
                           m("th", { scope: "col" }, "Name"),
-                          m("th", { scope: "col" }, "Banned"),
+                          m("th", { scope: "col" }, "Active"),
                           m("th", { scope: "col" }, "Executors"),
                           m("th", { scope: "col" }, "Ad Cabinets"),
                           m("th", { scope: "col" }, "Access URLs"),
@@ -71,7 +71,18 @@ class FacebookPacsBusinessPortfoliosView {
                                     portfolio.name,
                                   ),
                                 ),
-                                m("td", portfolio.isBanned ? "Yes" : "No"),
+                                m(
+                                  "td",
+                                  portfolio.isBanned
+                                    ? m("i", {
+                                        class: "fa fa-ban text-danger",
+                                        title: "Banned",
+                                      })
+                                    : m("i", {
+                                        class: "fa fa-check text-success",
+                                        title: "Active",
+                                      }),
+                                ),
                                 m(
                                   "td",
                                   (portfolio.executors || []).length,
@@ -87,7 +98,10 @@ class FacebookPacsBusinessPortfoliosView {
                                     {
                                       href: `#!/facebook/pacs/business-portfolios/${portfolio.id}/access-urls`,
                                     },
-                                    "View",
+                                    m("i", {
+                                      class: "fa fa-link",
+                                      title: "Access URLs",
+                                    }),
                                   ),
                                 ),
                               ]);
