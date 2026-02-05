@@ -47,7 +47,7 @@ class ExecutorsSearchWidget {
       renderResult: function (result, props) {
         return `<li ${props}>
           <div class="d-flex justify-content-between">
-            <span id="executor-${result.id}">${result.name}</span>
+            <span>${result.name}</span>
           </div>
         </li>`;
       },

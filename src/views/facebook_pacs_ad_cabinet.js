@@ -48,7 +48,6 @@ class BusinessPortfolioSearchWidget {
         return `<li ${props}>
           <div class="d-flex justify-content-between">
             <span>${result.name}</span>
-            <span class="text-muted">#${result.id}</span>
           </div>
         </li>`;
       },
