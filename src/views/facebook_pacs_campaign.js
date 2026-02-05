@@ -100,6 +100,94 @@ class FacebookPacsCampaignView {
                           }.bind(this),
                         }),
                       ]),
+                      m(".row.g-3", [
+                        m(".col-sm-12.col-md-6", [
+                          m(
+                            "label.form-label",
+                            { for: "campaignCostModel" },
+                            "Cost Model",
+                          ),
+                          m(
+                            "select.form-select",
+                            {
+                              id: "campaignCostModel",
+                              value: this.model.form.costModel,
+                              onchange: function (event) {
+                                this.model.form.costModel = event.target.value;
+                              }.bind(this),
+                            },
+                            [
+                              m("option", { value: "cpc" }, "CPC"),
+                              m("option", { value: "cpm" }, "CPM"),
+                              m("option", { value: "cpl" }, "CPL"),
+                              m("option", { value: "cpa" }, "CPA"),
+                              m("option", { value: "cpi" }, "CPI"),
+                            ],
+                          ),
+                        ]),
+                      ]),
+                      m(".row.g-3.mt-1", [
+                        m(".col-sm-12.col-md-6", [
+                          m(
+                            "label.form-label",
+                            { for: "campaignCostValue" },
+                            "Cost Value",
+                          ),
+                          m("input.form-control", {
+                            type: "number",
+                            id: "campaignCostValue",
+                            placeholder: "Cost value",
+                            value: this.model.form.costValue,
+                            oninput: function (event) {
+                              this.model.form.costValue = event.target.value;
+                            }.bind(this),
+                          }),
+                        ]),
+                        m(".col-sm-12.col-md-6", [
+                          m(
+                            "label.form-label",
+                            { for: "campaignCurrency" },
+                            "Currency",
+                          ),
+                          m(
+                            "select.form-select",
+                            {
+                              id: "campaignCurrency",
+                              value: this.model.form.currency,
+                              onchange: function (event) {
+                                this.model.form.currency = event.target.value;
+                              }.bind(this),
+                            },
+                            [
+                              m("option", { value: "usd" }, "USD"),
+                              m("option", { value: "eur" }, "EUR"),
+                              m("option", { value: "uah" }, "UAH"),
+                            ],
+                          ),
+                        ]),
+                      ]),
+                      m(".mb-3.mt-3", [
+                        m(
+                          "label.form-label",
+                          { for: "campaignStatusMapper" },
+                          "Status Mapper",
+                        ),
+                        m("textarea.form-control.font-monospace", {
+                          id: "campaignStatusMapper",
+                          rows: "4",
+                          placeholder:
+                            '{"parameter":"state","mapping":{"approved":"APPROVED","rejected":"REJECTED"}}',
+                          value: this.model.form.statusMapperText,
+                          oninput: function (event) {
+                            this.model.form.statusMapperText =
+                              event.target.value;
+                          }.bind(this),
+                        }),
+                        m(
+                          ".form-text",
+                          "Provide a JSON object for status mapping.",
+                        ),
+                      ]),
                       m(".mb-3", [
                         m(
                           "label.form-label",

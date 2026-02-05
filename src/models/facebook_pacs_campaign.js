@@ -10,6 +10,10 @@ class FacebookPacsCampaignModel {
     this.lastLoaded = null;
     this.form = {
       name: "",
+      costModel: "cpc",
+      costValue: "",
+      currency: "usd",
+      statusMapperText: "",
       executorId: "",
       adCabinetId: "",
       businessPageId: "",
@@ -18,6 +22,12 @@ class FacebookPacsCampaignModel {
 
   setFormValues(payload) {
     this.form.name = payload.name || "";
+    this.form.costModel = payload.costModel || "cpa";
+    this.form.costValue = payload.costValue || "";
+    this.form.currency = payload.currency || "usd";
+    this.form.statusMapperText = payload.statusMapper
+      ? JSON.stringify(payload.statusMapper, null, 2)
+      : "";
     this.form.executorId = payload.executor ? String(payload.executor.id) : "";
     this.form.adCabinetId = payload.adCabinet ? String(payload.adCabinet.id) : "";
     this.form.businessPageId = payload.businessPage ? String(payload.businessPage.id) : "";
@@ -57,6 +67,36 @@ class FacebookPacsCampaignModel {
       return "Name is required.";
     }
 
+    if (!this.form.costModel) {
+      return "Cost model is required.";
+    }
+
+    if (!this.form.currency) {
+      return "Currency is required.";
+    }
+
+    if (this.form.costValue === "") {
+      return "Cost value is required.";
+    }
+
+    if (Number.isNaN(Number(this.form.costValue))) {
+      return "Cost value must be a number.";
+    }
+
+    if (!this.form.statusMapperText.trim()) {
+      return "Status mapper is required.";
+    }
+
+    try {
+      let parsed = JSON.parse(this.form.statusMapperText);
+
+      if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return "Status mapper must be a JSON object.";
+      }
+    } catch (error) {
+      return "Status mapper must be valid JSON.";
+    }
+
     if (!this.form.executorId) {
       return "Executor is required.";
     }
@@ -73,8 +113,14 @@ class FacebookPacsCampaignModel {
   }
 
   buildPayload() {
+    let statusMapper = JSON.parse(this.form.statusMapperText);
+
     return {
       name: this.form.name.trim(),
+      costModel: this.form.costModel,
+      costValue: Number(this.form.costValue),
+      currency: this.form.currency,
+      statusMapper: statusMapper,
       executorId: Number(this.form.executorId),
       adCabinetId: Number(this.form.adCabinetId),
       businessPageId: Number(this.form.businessPageId),
