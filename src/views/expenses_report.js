@@ -128,6 +128,7 @@ class ExpensesReportView {
     this.autocompleteRoot = null;
     this.distributionParameters = [];
     this.distributionParameterError = null;
+    this.distributionParameterLocked = false;
     this.validationErrors = [];
   }
 
@@ -145,6 +146,7 @@ class ExpensesReportView {
         if (this.campaigns.length > 0) {
           this.model.filter.campaignId = Number(this.campaigns[0].id);
           this.fetchDistributionParameters(this.model.filter.campaignId);
+          this.fetchCampaignDetails(this.model.filter.campaignId);
           this.model.fetch();
         }
       }.bind(this));
@@ -178,6 +180,33 @@ class ExpensesReportView {
       }.bind(this));
   }
 
+  fetchCampaignDetails(campaignId) {
+    if (!campaignId) {
+      this.distributionParameterLocked = false;
+      return;
+    }
+
+    api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
+      })
+      .then(function (payload) {
+        const param = payload ? payload.expensesDistributionParameter : null;
+        if (param !== null && param !== undefined && param !== "") {
+          this.model.distributionParameter = param;
+          this.distributionParameterLocked = true;
+        } else {
+          this.distributionParameterLocked = false;
+        }
+        this.saveError = null;
+        this.saveSuccess = null;
+      }.bind(this))
+      .catch(function () {
+        this.distributionParameterLocked = false;
+      }.bind(this));
+  }
+
   initAutocomplete(root) {
     if (this.autocomplete) {
       return;
@@ -186,6 +215,10 @@ class ExpensesReportView {
     this.autocompleteRoot = root;
     this.autocomplete = new Autocomplete(root, {
       search: function (input) {
+        if (this.distributionParameterLocked) {
+          return Promise.resolve([]);
+        }
+
         const query = (input || "").toLowerCase();
 
         return Promise.resolve(
@@ -206,6 +239,10 @@ class ExpensesReportView {
         </li>`;
       },
       onSubmit: function (result) {
+        if (this.distributionParameterLocked) {
+          return;
+        }
+
         this.model.distributionParameter = result.parameter;
         this.saveError = null;
         this.saveSuccess = null;
@@ -447,6 +484,7 @@ class ExpensesReportView {
         );
         this.model.isDirty = false;
         this.validationErrors = [];
+        this.model.fetch();
       }.bind(this))
       .catch(function () {
         this.isSaving = false;
@@ -508,9 +546,11 @@ class ExpensesReportView {
                     oninput: function (event) {
                       this.model.filter.campaignId = Number(event.target.value);
                       this.model.distributionParameter = "";
+                      this.distributionParameterLocked = false;
                       this.fetchDistributionParameters(
                         this.model.filter.campaignId,
                       );
+                      this.fetchCampaignDetails(this.model.filter.campaignId);
                       this.model.fetch();
                     }.bind(this),
                     value: this.model.filter.campaignId,
@@ -542,6 +582,7 @@ class ExpensesReportView {
                       type: "text",
                       value: this.model.distributionParameter,
                       placeholder: "Enter distribution parameter",
+                      readonly: this.distributionParameterLocked,
                       oninput: function (event) {
                         this.model.distributionParameter = event.target.value;
                         this.saveError = null;
