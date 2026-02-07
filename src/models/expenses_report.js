@@ -35,6 +35,12 @@ class ExpensesReportModel {
       return;
     }
 
+    const startMs = Date.parse(this.filter.start);
+    const endMs = Date.parse(this.filter.end);
+
+    const diffDays = Math.floor((endMs - startMs) / 86400000) + 1;
+    let pageSize = Math.max(1, diffDays);
+
     this.isLoading = true;
     this.error = null;
 
@@ -47,7 +53,7 @@ class ExpensesReportModel {
           end: this.filter.end,
           campaignId: this.filter.campaignId,
           page: 1,
-          pageSize: 500,
+          pageSize: pageSize,
           sortBy: "date",
           sortOrder: "asc",
         },
