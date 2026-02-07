@@ -77,6 +77,10 @@ const ExpensesReportTable = {
         });
       }
 
+      if (typeof vnode.attrs.onValidate === "function") {
+        vnode.attrs.onValidate();
+      }
+
       m.redraw();
     });
 
@@ -94,7 +98,11 @@ const ExpensesReportTable = {
 
     if (vnode.state.lastVersion !== model.tableVersion) {
       table.setColumns(model.columns || []);
-      table.setData(model.rows || []);
+      table.setData(model.rows || []).then(function () {
+        if (typeof vnode.attrs.onValidate === "function") {
+          vnode.attrs.onValidate();
+        }
+      });
       vnode.state.lastVersion = model.tableVersion;
     }
   },
@@ -120,6 +128,7 @@ class ExpensesReportView {
     this.autocompleteRoot = null;
     this.distributionParameters = [];
     this.distributionParameterError = null;
+    this.validationErrors = [];
   }
 
   oninit() {
@@ -208,6 +217,154 @@ class ExpensesReportView {
 
   _resetToOriginal() {
     this.model.resetToOriginal();
+    this.validationErrors = [];
+  }
+
+  _isValidDateString(value) {
+    if (typeof value !== "string") {
+      return false;
+    }
+
+    const trimmed = value.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      return false;
+    }
+
+    const parsed = Date.parse(trimmed);
+    if (Number.isNaN(parsed)) {
+      return false;
+    }
+
+    const check = new Date(parsed).toISOString().slice(0, 10);
+    return check === trimmed;
+  }
+
+  _clearValidationMarkers() {
+    if (!this.table) {
+      return;
+    }
+
+    this.table.getRows().forEach(function (row) {
+      row.getCells().forEach(function (cell) {
+        const element = cell.getElement();
+        element.classList.remove("is-invalid");
+        element.removeAttribute("title");
+        element.removeAttribute("data-validation-error");
+      });
+    });
+  }
+
+  _markInvalid(cell, message) {
+    if (!cell) {
+      return;
+    }
+
+    const element = cell.getElement();
+    element.classList.add("is-invalid");
+    if (message) {
+      element.setAttribute("title", message);
+      element.setAttribute("data-validation-error", message);
+    }
+  }
+
+  _validateTable() {
+    if (!this.table) {
+      this.validationErrors = [];
+      return;
+    }
+
+    this._clearValidationMarkers();
+
+    const errors = [];
+    const rows = this.table.getRows();
+    const headerRow = rows[0];
+    const columnFields = this.model.columnFields || [];
+
+    if (headerRow) {
+      columnFields.forEach(function (field) {
+        const hasValue = rows.slice(1).some(function (row) {
+          const cell = row.getCell(field);
+          if (!cell) {
+            return false;
+          }
+          const value = cell.getValue();
+          return value !== null && value !== undefined && value !== "";
+        });
+
+        if (hasValue) {
+          const headerCell = headerRow.getCell(field);
+          const headerValue = headerCell ? headerCell.getValue() : "";
+          const headerValid =
+            typeof headerValue === "string" && headerValue.trim() !== "";
+
+          if (!headerValid) {
+            const message = `Missing distribution key for column ${field}.`;
+            this._markInvalid(headerCell, message);
+            errors.push(message);
+          }
+        }
+      }.bind(this));
+    }
+
+    rows.slice(1).forEach(
+      function (row, rowIndex) {
+        const dateCell = row.getCell("date");
+        const dateValue = dateCell ? dateCell.getValue() : "";
+        const hasValues = columnFields.some(function (field) {
+          const cell = row.getCell(field);
+          if (!cell) {
+            return false;
+          }
+          const value = cell.getValue();
+          return value !== null && value !== undefined && value !== "";
+        });
+
+        if (hasValues) {
+          if (dateValue === null || dateValue === undefined || dateValue === "") {
+            const message = `Missing date in row ${rowIndex + 2}.`;
+            this._markInvalid(dateCell, message);
+            errors.push(message);
+          } else if (!this._isValidDateString(String(dateValue))) {
+            const message = `Invalid date in row ${rowIndex + 2}.`;
+            this._markInvalid(dateCell, message);
+            errors.push(message);
+          }
+        } else if (
+          dateValue !== null &&
+          dateValue !== undefined &&
+          dateValue !== ""
+        ) {
+          if (!this._isValidDateString(String(dateValue))) {
+            const message = `Invalid date in row ${rowIndex + 2}.`;
+            this._markInvalid(dateCell, message);
+            errors.push(message);
+          }
+        }
+
+        columnFields.forEach(
+          function (field) {
+            const cell = row.getCell(field);
+            if (!cell) {
+              return;
+            }
+
+            const value = cell.getValue();
+            if (value === null || value === undefined || value === "") {
+              return;
+            }
+
+            const numeric = Number(value);
+            if (Number.isNaN(numeric) || numeric < 0) {
+              const message = `Invalid value in row ${rowIndex + 2}.`;
+              this._markInvalid(cell, message);
+              errors.push(message);
+            }
+          }.bind(this),
+        );
+      }.bind(this),
+    );
+
+    this.validationErrors = errors;
   }
 
   _buildSavePayload() {
@@ -253,6 +410,13 @@ class ExpensesReportView {
   }
 
   _saveReport() {
+    this._validateTable();
+    if (this.validationErrors.length > 0) {
+      this.saveError = "Fix validation errors before saving.";
+      this.saveSuccess = null;
+      return;
+    }
+
     if (!this.model.distributionParameter) {
       this.saveError = "Distribution parameter is required for saving.";
       this.saveSuccess = null;
@@ -282,6 +446,7 @@ class ExpensesReportView {
           JSON.stringify(this.model.columnFields),
         );
         this.model.isDirty = false;
+        this.validationErrors = [];
       }.bind(this))
       .catch(function () {
         this.isSaving = false;
@@ -414,6 +579,10 @@ class ExpensesReportView {
                 model: this.model,
                 onReady: function (table) {
                   this.table = table;
+                  this._validateTable();
+                }.bind(this),
+                onValidate: function () {
+                  this._validateTable();
                 }.bind(this),
               }),
               m(".mt-3", [
@@ -422,7 +591,10 @@ class ExpensesReportView {
                     "button.btn.btn-primary",
                     {
                       type: "button",
-                      disabled: this.isSaving || !this.model.filter.isReady(),
+                      disabled:
+                        this.isSaving ||
+                        !this.model.filter.isReady() ||
+                        this.validationErrors.length > 0,
                       onclick: function () {
                         this._saveReport();
                       }.bind(this),
@@ -441,6 +613,12 @@ class ExpensesReportView {
                     "Reset",
                   ),
                 ]),
+                this.validationErrors.length > 0
+                  ? m(
+                      "div.text-danger.mt-2",
+                      `Validation errors: ${this.validationErrors.length}`,
+                    )
+                  : null,
                 this.saveError
                   ? m("div.text-danger.mt-2", this.saveError)
                   : null,
