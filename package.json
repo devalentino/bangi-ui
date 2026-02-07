@@ -16,7 +16,8 @@
     "chart.js": "^4.5.0",
     "dotenv": "^17.2.3",
     "mithril": "^2.3.3",
-    "sortablejs": "^1.15.6"
+    "sortablejs": "^1.15.6",
+    "tabulator-tables": "^6.3.0"
   },
   "devDependencies": {
     "esbuild": "^0.25.8",

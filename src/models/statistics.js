@@ -46,7 +46,7 @@ class StatisticsModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/reports/base`,
+      url: `${process.env.BACKEND_API_BASE_URL}/reports/statistics`,
       params: parameters,
     }).then(function (payload) {
       this.report = payload.content.report;

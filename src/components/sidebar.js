@@ -5,6 +5,7 @@ class Sidebar {
     let currentRoute = m.route.get();
     let isFacebookPacsRoute = currentRoute.indexOf("/facebook/pacs") === 0;
     let isStatisticsRoute = currentRoute === "/statistics";
+    let isExpensesReportRoute = currentRoute === "/reports/expenses";
     let isCoreCampaignsRoute = currentRoute.indexOf("/core/campaigns") === 0;
 
     function linkClass(isActive) {
@@ -30,6 +31,13 @@ class Sidebar {
                 [
                 m("i.fa.fa-tachometer-alt.me-2"),
                 "Statistics",
+              ]),
+              m(
+                "a.nav-item.nav-link",
+                { href: "#!/reports/expenses", class: linkClass(isExpensesReportRoute) },
+                [
+                m("i.fa.fa-receipt.me-2"),
+                "Expenses Report",
               ]),
               m(
                 "a.nav-item.nav-link",
