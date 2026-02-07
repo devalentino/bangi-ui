@@ -41,14 +41,26 @@ function normalizeValue(value) {
   return value;
 }
 
+function excelColumnTitle(index) {
+  let title = "";
+  let num = index + 1;
+
+  while (num > 0) {
+    let remainder = (num - 1) % 26;
+    title = String.fromCharCode(65 + remainder) + title;
+    num = Math.floor((num - 1) / 26);
+  }
+
+  return title;
+}
+
 const ExpensesReportTable = {
   oncreate(vnode) {
-    const model = vnode.attrs.model;
     const state = vnode.state;
     const table = new Tabulator(vnode.dom, {
       layout: "fitColumns",
-      data: model.rows,
-      columns: model.columns,
+      data: vnode.attrs.rows,
+      columns: vnode.attrs.columns,
       columnDefaults: {
         headerSort: false,
         widthGrow: 1,
@@ -57,7 +69,6 @@ const ExpensesReportTable = {
     });
 
     vnode.state.table = table;
-    vnode.state.lastVersion = model.tableVersion;
     vnode.state.isSyncing = false;
 
     table.on("cellEdited", function () {
@@ -65,16 +76,8 @@ const ExpensesReportTable = {
         return;
       }
 
-      model.isDirty = true;
-      model.rows = table.getData();
-      const updated = model.ensureMinimumEmptySpace();
-
-      if (updated) {
-        state.isSyncing = true;
-        table.setColumns(model.columns || []);
-        table.setData(model.rows || []).then(function () {
-          state.isSyncing = false;
-        });
+      if (typeof vnode.attrs.onChange === "function") {
+        vnode.attrs.onChange(table, state);
       }
 
       if (typeof vnode.attrs.onValidate === "function") {
@@ -86,24 +89,6 @@ const ExpensesReportTable = {
 
     if (vnode.attrs.onReady) {
       vnode.attrs.onReady(table);
-    }
-  },
-  onupdate(vnode) {
-    const model = vnode.attrs.model;
-    const table = vnode.state.table;
-
-    if (!table) {
-      return;
-    }
-
-    if (vnode.state.lastVersion !== model.tableVersion) {
-      table.setColumns(model.columns || []);
-      table.setData(model.rows || []).then(function () {
-        if (typeof vnode.attrs.onValidate === "function") {
-          vnode.attrs.onValidate();
-        }
-      });
-      vnode.state.lastVersion = model.tableVersion;
     }
   },
   onremove(vnode) {
@@ -147,7 +132,7 @@ class ExpensesReportView {
           this.model.filter.campaignId = Number(this.campaigns[0].id);
           this.fetchDistributionParameters(this.model.filter.campaignId);
           this.fetchCampaignDetails(this.model.filter.campaignId);
-          this.model.fetch();
+          this._fetchReport();
         }
       }.bind(this));
   }
@@ -252,9 +237,91 @@ class ExpensesReportView {
     });
   }
 
+  _matrixColumnCount() {
+    if (!this.model.matrix || this.model.matrix.length === 0) {
+      return 1;
+    }
+
+    return Math.max(1, this.model.matrix[0].length);
+  }
+
+  _buildTableFromMatrix() {
+    const matrix = this.model.matrix || [];
+    const columnCount = this._matrixColumnCount();
+
+    const columns = [
+      {
+        title: excelColumnTitle(0),
+        field: "date",
+        hozAlign: "left",
+        editor: "input",
+        frozen: true,
+      },
+    ];
+
+    for (let i = 1; i < columnCount; i += 1) {
+      columns.push({
+        title: excelColumnTitle(i),
+        field: `c${i}`,
+        editor: "input",
+        hozAlign: "right",
+      });
+    }
+
+    const rows = (matrix.length ? matrix : [[]]).map(function (row) {
+      const rowValues = Array.isArray(row) ? row : [];
+      const record = { date: rowValues[0] || "" };
+
+      for (let i = 1; i < columnCount; i += 1) {
+        record[`c${i}`] = rowValues[i] !== undefined ? rowValues[i] : "";
+      }
+
+      return record;
+    });
+
+    return { columns: columns, rows: rows };
+  }
+
+  _tableToMatrix(table) {
+    const columnCount = table.getColumns().length;
+    const data = table.getData();
+
+    return data.map(function (row) {
+      const values = new Array(columnCount).fill("");
+      values[0] = row.date || "";
+      for (let i = 1; i < columnCount; i += 1) {
+        values[i] = row[`c${i}`] !== undefined ? row[`c${i}`] : "";
+      }
+      return values;
+    });
+  }
+
   _resetToOriginal() {
     this.model.resetToOriginal();
     this.validationErrors = [];
+    this._refreshTableAppearance();
+  }
+
+  _refreshTableAppearance() {
+    if (!this.table) {
+      return Promise.resolve();
+    }
+
+    const tableState = this._buildTableFromMatrix();
+    this.table.setColumns(tableState.columns || []);
+    return this.table.setData(tableState.rows || []).then(
+      function () {
+        this._validateTable();
+      }.bind(this),
+    );
+  }
+
+  _fetchReport() {
+    return this.model.fetch().then(
+      function () {
+        return this._refreshTableAppearance();
+      }.bind(this),
+    );
   }
 
   _isValidDateString(value) {
@@ -315,10 +382,11 @@ class ExpensesReportView {
     const errors = [];
     const rows = this.table.getRows();
     const headerRow = rows[0];
-    const columnFields = this.model.columnFields || [];
+    const columnCount = this._matrixColumnCount();
 
     if (headerRow) {
-      columnFields.forEach(function (field) {
+      for (let i = 1; i < columnCount; i += 1) {
+        const field = `c${i}`;
         const hasValue = rows.slice(1).some(function (row) {
           const cell = row.getCell(field);
           if (!cell) {
@@ -335,26 +403,31 @@ class ExpensesReportView {
             typeof headerValue === "string" && headerValue.trim() !== "";
 
           if (!headerValid) {
-            const message = `Missing distribution key for column ${field}.`;
+            const message = `Missing distribution key for column ${excelColumnTitle(i)}.`;
             this._markInvalid(headerCell, message);
             errors.push(message);
           }
         }
-      }.bind(this));
+      }
     }
 
     rows.slice(1).forEach(
       function (row, rowIndex) {
         const dateCell = row.getCell("date");
         const dateValue = dateCell ? dateCell.getValue() : "";
-        const hasValues = columnFields.some(function (field) {
-          const cell = row.getCell(field);
+        let hasValues = false;
+
+        for (let i = 1; i < columnCount; i += 1) {
+          const cell = row.getCell(`c${i}`);
           if (!cell) {
-            return false;
+            continue;
           }
           const value = cell.getValue();
-          return value !== null && value !== undefined && value !== "";
-        });
+          if (value !== null && value !== undefined && value !== "") {
+            hasValues = true;
+            break;
+          }
+        }
 
         if (hasValues) {
           if (dateValue === null || dateValue === undefined || dateValue === "") {
@@ -378,26 +451,24 @@ class ExpensesReportView {
           }
         }
 
-        columnFields.forEach(
-          function (field) {
-            const cell = row.getCell(field);
-            if (!cell) {
-              return;
-            }
+        for (let i = 1; i < columnCount; i += 1) {
+          const cell = row.getCell(`c${i}`);
+          if (!cell) {
+            continue;
+          }
 
-            const value = cell.getValue();
-            if (value === null || value === undefined || value === "") {
-              return;
-            }
+          const value = cell.getValue();
+          if (value === null || value === undefined || value === "") {
+            continue;
+          }
 
-            const numeric = Number(value);
-            if (Number.isNaN(numeric) || numeric < 0) {
-              const message = `Invalid value in row ${rowIndex + 2}.`;
-              this._markInvalid(cell, message);
-              errors.push(message);
-            }
-          }.bind(this),
-        );
+          const numeric = Number(value);
+          if (Number.isNaN(numeric) || numeric < 0) {
+            const message = `Invalid value in row ${rowIndex + 2}.`;
+            this._markInvalid(cell, message);
+            errors.push(message);
+          }
+        }
       }.bind(this),
     );
 
@@ -405,16 +476,9 @@ class ExpensesReportView {
   }
 
   _buildSavePayload() {
-    const rows = this.table ? this.table.getData() : this.model.rows;
+    const rows = this.table ? this.table.getData() : [];
     const headerRow = rows[0] || {};
-    const keys = this.model.columnFields
-      .map(function (field) {
-        const value = headerRow[field];
-        return typeof value === "string" ? value.trim() : value;
-      })
-      .filter(function (value) {
-        return value !== null && value !== undefined && value !== "";
-      });
+    const columnCount = this._matrixColumnCount();
 
     const dates = rows
       .slice(1)
@@ -425,12 +489,14 @@ class ExpensesReportView {
         function (row) {
           const distribution = {};
 
-          keys.forEach(
-            function (key, index) {
-              const field = this.model.columnFields[index];
-              distribution[key] = normalizeValue(row[field]);
-            }.bind(this),
-          );
+          for (let i = 1; i < columnCount; i += 1) {
+            const rawKey = headerRow[`c${i}`];
+            const key =
+              typeof rawKey === "string" ? rawKey.trim() : rawKey;
+            if (key !== null && key !== undefined && key !== "") {
+              distribution[key] = normalizeValue(row[`c${i}`]);
+            }
+          }
 
           return {
             date: row.date,
@@ -473,18 +539,8 @@ class ExpensesReportView {
       .then(function () {
         this.isSaving = false;
         this.saveSuccess = "Report saved.";
-        this.model.originalRows = JSON.parse(
-          JSON.stringify(this.table ? this.table.getData() : this.model.rows),
-        );
-        this.model.originalColumns = JSON.parse(
-          JSON.stringify(this.model.columns),
-        );
-        this.model.originalColumnFields = JSON.parse(
-          JSON.stringify(this.model.columnFields),
-        );
-        this.model.isDirty = false;
         this.validationErrors = [];
-        this.model.fetch();
+        this._fetchReport();
       }.bind(this))
       .catch(function () {
         this.isSaving = false;
@@ -493,6 +549,8 @@ class ExpensesReportView {
   }
 
   view() {
+    const tableState = this._buildTableFromMatrix();
+
     return m(
       ".container-fluid.pt-4.px-4",
       [
@@ -512,7 +570,7 @@ class ExpensesReportView {
                     value: this.model.filter.start || "",
                     oninput: function (event) {
                       this.model.filter.start = event.target.value;
-                      this.model.fetch();
+                      this._fetchReport();
                     }.bind(this),
                   }),
                 ),
@@ -523,7 +581,7 @@ class ExpensesReportView {
                     value: this.model.filter.end || "",
                     oninput: function (event) {
                       this.model.filter.end = event.target.value;
-                      this.model.fetch();
+                      this._fetchReport();
                     }.bind(this),
                   }),
                 ),
@@ -551,7 +609,7 @@ class ExpensesReportView {
                         this.model.filter.campaignId,
                       );
                       this.fetchCampaignDetails(this.model.filter.campaignId);
-                      this.model.fetch();
+                      this._fetchReport();
                     }.bind(this),
                     value: this.model.filter.campaignId,
                   },
@@ -598,7 +656,10 @@ class ExpensesReportView {
                 ),
               ]),
               this.distributionParameterError
-                ? m("div.text-danger.small.mt-2", this.distributionParameterError)
+                ? m(
+                    "div.text-danger.small.mt-2",
+                    this.distributionParameterError,
+                  )
                 : null,
             ]),
           ),
@@ -617,13 +678,25 @@ class ExpensesReportView {
                 ? m("div.mb-3", "Loading report...")
                 : null,
               m(ExpensesReportTable, {
-                model: this.model,
+                columns: tableState.columns,
+                rows: tableState.rows,
                 onReady: function (table) {
                   this.table = table;
                   this._validateTable();
                 }.bind(this),
                 onValidate: function () {
                   this._validateTable();
+                }.bind(this),
+                onChange: function (table, state) {
+                  this.model.matrix = this._tableToMatrix(table);
+                  const updated = this.model.ensureMinimumEmptySpace();
+
+                  if (updated) {
+                    state.isSyncing = true;
+                    this._refreshTableAppearance().then(function () {
+                      state.isSyncing = false;
+                    });
+                  }
                 }.bind(this),
               }),
               m(".mt-3", [
@@ -646,7 +719,6 @@ class ExpensesReportView {
                     "button.btn.btn-outline-secondary",
                     {
                       type: "button",
-                      disabled: !this.model.isDirty,
                       onclick: function () {
                         this._resetToOriginal();
                       }.bind(this),
