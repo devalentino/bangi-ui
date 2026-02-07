@@ -34,18 +34,18 @@ class Sidebar {
               ]),
               m(
                 "a.nav-item.nav-link",
-                { href: "#!/reports/expenses", class: linkClass(isExpensesReportRoute) },
-                [
-                m("i.fa.fa-receipt.me-2"),
-                "Expenses Report",
-              ]),
-              m(
-                "a.nav-item.nav-link",
                 { href: "#!/core/campaigns", class: linkClass(isCoreCampaignsRoute) },
                 [
                 m("i.fa.fa-bullhorn.me-2"),
                 "Campaigns",
               ]),
+              m(
+                "a.nav-item.nav-link",
+                { href: "#!/reports/expenses", class: linkClass(isExpensesReportRoute) },
+                [
+                  m("i.fa.fa-receipt.me-2"),
+                  "Expenses",
+                ]),
               m(".nav-item.dropdown", [
                 m(
                   "a.nav-link.dropdown-toggle",

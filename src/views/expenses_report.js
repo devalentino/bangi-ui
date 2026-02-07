@@ -1,7 +1,9 @@
 const m = require("mithril");
 const tabulatorModule = require("tabulator-tables");
+const AutocompleteModule = require("@trevoreyre/autocomplete-js");
 const Tabulator =
   tabulatorModule.TabulatorFull || tabulatorModule.default || tabulatorModule;
+const Autocomplete = AutocompleteModule.default || AutocompleteModule;
 const api = require("../models/api");
 const ExpensesReportModel = require("../models/expenses_report");
 
@@ -114,6 +116,10 @@ class ExpensesReportView {
     this.isSaving = false;
     this.saveError = null;
     this.saveSuccess = null;
+    this.autocomplete = null;
+    this.autocompleteRoot = null;
+    this.distributionParameters = [];
+    this.distributionParameterError = null;
   }
 
   oninit() {
@@ -129,9 +135,75 @@ class ExpensesReportView {
 
         if (this.campaigns.length > 0) {
           this.model.filter.campaignId = Number(this.campaigns[0].id);
+          this.fetchDistributionParameters(this.model.filter.campaignId);
           this.model.fetch();
         }
       }.bind(this));
+  }
+
+  onremove() {
+    if (this.autocomplete && this.autocomplete.destroy) {
+      this.autocomplete.destroy();
+    }
+  }
+
+  fetchDistributionParameters(campaignId) {
+    if (!campaignId) {
+      this.distributionParameters = [];
+      return;
+    }
+
+    api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/core/filters/campaigns/${campaignId}/expenses-distribution-parameters`,
+      })
+      .then(function (payload) {
+        this.distributionParameters = payload || [];
+        this.distributionParameterError = null;
+      }.bind(this))
+      .catch(function () {
+        this.distributionParameters = [];
+        this.distributionParameterError =
+          "Failed to load distribution parameters.";
+      }.bind(this));
+  }
+
+  initAutocomplete(root) {
+    if (this.autocomplete) {
+      return;
+    }
+
+    this.autocompleteRoot = root;
+    this.autocomplete = new Autocomplete(root, {
+      search: function (input) {
+        const query = (input || "").toLowerCase();
+
+        return Promise.resolve(
+          this.distributionParameters.filter(function (item) {
+            const value = (item.parameter || "").toLowerCase();
+            return value.includes(query);
+          }),
+        );
+      }.bind(this),
+      getResultValue: function (result) {
+        return result.parameter;
+      },
+      renderResult: function (result, props) {
+        return `<li ${props}>
+          <div class="d-flex justify-content-between">
+            <span>${result.parameter}</span>
+          </div>
+        </li>`;
+      },
+      onSubmit: function (result) {
+        this.model.distributionParameter = result.parameter;
+        this.saveError = null;
+        this.saveSuccess = null;
+      }.bind(this),
+      autoSelect: true,
+      submitOnEnter: true,
+    });
   }
 
   _resetToOriginal() {
@@ -270,6 +342,10 @@ class ExpensesReportView {
                     "aria-label": "Campaign",
                     oninput: function (event) {
                       this.model.filter.campaignId = Number(event.target.value);
+                      this.model.distributionParameter = "";
+                      this.fetchDistributionParameters(
+                        this.model.filter.campaignId,
+                      );
                       this.model.fetch();
                     }.bind(this),
                     value: this.model.filter.campaignId,
@@ -286,50 +362,37 @@ class ExpensesReportView {
             m(".h-100.bg-light.rounded.p-4", [
               m(
                 ".d-flex.align-items-center.justify-content-between.mb-4",
-                m("h6.mb-0", "Report Actions"),
+                m("h6.mb-0", "Distribution Parameter"),
               ),
               m(".mb-3", [
-                m("label.form-label", "Distribution Parameter"),
-                m("input.form-control", {
-                  type: "text",
-                  value: this.model.distributionParameter,
-                  placeholder: "Enter distribution parameter",
-                  oninput: function (event) {
-                    this.model.distributionParameter = event.target.value;
-                    this.saveError = null;
-                    this.saveSuccess = null;
-                  }.bind(this),
-                }),
-              ]),
-              m(".d-flex.flex-column.gap-2", [
                 m(
-                  "button.btn.btn-primary",
+                  "div.autocomplete",
                   {
-                    type: "button",
-                    disabled: this.isSaving || !this.model.filter.isReady(),
-                    onclick: function () {
-                      this._saveReport();
+                    oncreate: function (node) {
+                      this.initAutocomplete(node.dom);
                     }.bind(this),
                   },
-                  this.isSaving ? "Saving..." : "Save Report",
-                ),
-                m(
-                  "button.btn.btn-outline-secondary",
-                  {
-                    type: "button",
-                    disabled: !this.model.isDirty,
-                    onclick: function () {
-                      this._resetToOriginal();
-                    }.bind(this),
-                  },
-                  "Reset",
+                  [
+                    m("input.form-control", {
+                      type: "text",
+                      value: this.model.distributionParameter,
+                      placeholder: "Enter distribution parameter",
+                      oninput: function (event) {
+                        this.model.distributionParameter = event.target.value;
+                        this.saveError = null;
+                        this.saveSuccess = null;
+                      }.bind(this),
+                    }),
+                    m(
+                      "div",
+                      { style: "position: relative;" },
+                      m("ul.autocomplete-result-list"),
+                    ),
+                  ],
                 ),
               ]),
-              this.saveError
-                ? m("div.text-danger.mt-2", this.saveError)
-                : null,
-              this.saveSuccess
-                ? m("div.text-success.mt-2", this.saveSuccess)
+              this.distributionParameterError
+                ? m("div.text-danger.small.mt-2", this.distributionParameterError)
                 : null,
             ]),
           ),
@@ -353,6 +416,38 @@ class ExpensesReportView {
                   this.table = table;
                 }.bind(this),
               }),
+              m(".mt-3", [
+                m(".d-flex.flex-column.flex-md-row.gap-2", [
+                  m(
+                    "button.btn.btn-primary",
+                    {
+                      type: "button",
+                      disabled: this.isSaving || !this.model.filter.isReady(),
+                      onclick: function () {
+                        this._saveReport();
+                      }.bind(this),
+                    },
+                    this.isSaving ? "Saving..." : "Save Report",
+                  ),
+                  m(
+                    "button.btn.btn-outline-secondary",
+                    {
+                      type: "button",
+                      disabled: !this.model.isDirty,
+                      onclick: function () {
+                        this._resetToOriginal();
+                      }.bind(this),
+                    },
+                    "Reset",
+                  ),
+                ]),
+                this.saveError
+                  ? m("div.text-danger.mt-2", this.saveError)
+                  : null,
+                this.saveSuccess
+                  ? m("div.text-success.mt-2", this.saveSuccess)
+                  : null,
+              ]),
             ]),
           ]),
         ]),
