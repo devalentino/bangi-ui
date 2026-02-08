@@ -134,7 +134,10 @@ class ExpensesReportView {
     api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/core/filters/campaigns/${campaignId}/expenses-distribution-parameters`,
+        url: `${process.env.BACKEND_API_BASE_URL}/reports/helpers/expenses-distribution-parameters`,
+        params: {
+          campaignId: campaignId,
+        },
       })
       .then(function (payload) {
         this.distributionParameters = payload || [];
