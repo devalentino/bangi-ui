@@ -2,23 +2,7 @@ let m = require("mithril");
 let StatisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
 let api = require("../models/api");
-
-function formatDate(date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function setDefaultDateRange(model) {
-  if (model.filter.from && model.filter.to) {
-    return;
-  }
-
-  let today = new Date();
-  let fromDate = new Date(today);
-  fromDate.setDate(today.getDate() - 6);
-
-  model.filter.from = formatDate(fromDate);
-  model.filter.to = formatDate(today);
-}
+let { setDefaultDateRange } = require("../utils/date");
 
 function getGroupByKeys(report) {
   let keys = [];
@@ -69,7 +53,7 @@ class FilterView {
   }
 
   oninit() {
-    setDefaultDateRange(this.model);
+    setDefaultDateRange(this.model.filter, "periodStart", "periodEnd");
 
     api.request({
       method: "GET",
@@ -98,26 +82,26 @@ class FilterView {
             m(".row.g-2", [
               m(
                 ".col-12",
-                m("input.form-control", {
-                  type: "date",
-                  value: this.model.filter.from || "",
-                  oninput: function (event) {
-                    this.model.filter.from = event.target.value;
-                    this.model.fetch();
-                  }.bind(this),
-                }),
-              ),
+                  m("input.form-control", {
+                    type: "date",
+                    value: this.model.filter.periodStart || "",
+                    oninput: function (event) {
+                      this.model.filter.periodStart = event.target.value;
+                      this.model.fetch();
+                    }.bind(this),
+                  }),
+                ),
               m(
                 ".col-12",
-                m("input.form-control", {
-                  type: "date",
-                  value: this.model.filter.to || "",
-                  oninput: function (event) {
-                    this.model.filter.to = event.target.value;
-                    this.model.fetch();
-                  }.bind(this),
-                }),
-              ),
+                  m("input.form-control", {
+                    type: "date",
+                    value: this.model.filter.periodEnd || "",
+                    oninput: function (event) {
+                      this.model.filter.periodEnd = event.target.value;
+                      this.model.fetch();
+                    }.bind(this),
+                  }),
+                ),
             ]),
           ]),
         ),

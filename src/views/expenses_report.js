@@ -1,4 +1,5 @@
 const m = require("mithril");
+const { setDefaultDateRange } = require("../utils/date");
 const tabulatorModule = require("tabulator-tables");
 const AutocompleteModule = require("@trevoreyre/autocomplete-js");
 const Tabulator =
@@ -7,24 +8,7 @@ const Autocomplete = AutocompleteModule.default || AutocompleteModule;
 const api = require("../models/api");
 const ExpensesReportModel = require("../models/expenses_report");
 
-function formatDate(date) {
-  return date.toISOString().slice(0, 10);
-}
-
-function setDefaultDateRange(model) {
-  if (model.filter.start && model.filter.end) {
-    return;
-  }
-
-  let today = new Date();
-  let fromDate = new Date(today);
-  fromDate.setDate(today.getDate() - 6);
-
-  model.filter.start = formatDate(fromDate);
-  model.filter.end = formatDate(today);
-}
-
-function normalizeValue(value) {
+function normalizeExpenseValue(value) {
   if (value === "" || value === null || value === undefined) {
     return null;
   }
@@ -65,7 +49,7 @@ const ExpensesReportTable = {
         headerSort: false,
         widthGrow: 1,
       },
-      placeholder: "Select filters to load data.",
+      placeholder: "Expenses report",
     });
 
     vnode.state.table = table;
@@ -76,13 +60,8 @@ const ExpensesReportTable = {
         return;
       }
 
-      if (typeof vnode.attrs.onChange === "function") {
-        vnode.attrs.onChange(table, state);
-      }
-
-      if (typeof vnode.attrs.onValidate === "function") {
-        vnode.attrs.onValidate();
-      }
+      vnode.attrs.onChange(table, state);
+      vnode.attrs.onValidate();
 
       m.redraw();
     });
@@ -118,7 +97,7 @@ class ExpensesReportView {
   }
 
   oninit() {
-    setDefaultDateRange(this.model);
+    setDefaultDateRange(this.model.filter, "periodStart", "periodEnd");
 
     api
       .request({
@@ -237,18 +216,8 @@ class ExpensesReportView {
     });
   }
 
-  _matrixColumnCount() {
-    if (!this.model.matrix || this.model.matrix.length === 0) {
-      return 1;
-    }
-
-    return Math.max(1, this.model.matrix[0].length);
-  }
-
   _buildTableFromMatrix() {
-    const matrix = this.model.matrix || [];
-    const columnCount = this._matrixColumnCount();
-
+    const columnCount = this.model.matrix[0].length;
     const columns = [
       {
         title: excelColumnTitle(0),
@@ -268,12 +237,11 @@ class ExpensesReportView {
       });
     }
 
-    const rows = (matrix.length ? matrix : [[]]).map(function (row) {
-      const rowValues = Array.isArray(row) ? row : [];
-      const record = { date: rowValues[0] || "" };
+    const rows = this.model.matrix.map(function (row) {
+      const record = { date: row[0] || "" };
 
       for (let i = 1; i < columnCount; i += 1) {
-        record[`c${i}`] = rowValues[i] !== undefined ? rowValues[i] : "";
+        record[`c${i}`] = row[i];
       }
 
       return record;
@@ -382,7 +350,7 @@ class ExpensesReportView {
     const errors = [];
     const rows = this.table.getRows();
     const headerRow = rows[0];
-    const columnCount = this._matrixColumnCount();
+    const columnCount = this.model.matrix[0].length;
 
     if (headerRow) {
       for (let i = 1; i < columnCount; i += 1) {
@@ -478,7 +446,7 @@ class ExpensesReportView {
   _buildSavePayload() {
     const rows = this.table ? this.table.getData() : [];
     const headerRow = rows[0] || {};
-    const columnCount = this._matrixColumnCount();
+    const columnCount = this.model.matrix[0].length;
 
     const dates = rows
       .slice(1)
@@ -494,7 +462,7 @@ class ExpensesReportView {
             const key =
               typeof rawKey === "string" ? rawKey.trim() : rawKey;
             if (key !== null && key !== undefined && key !== "") {
-              distribution[key] = normalizeValue(row[`c${i}`]);
+              distribution[key] = normalizeExpenseValue(row[`c${i}`]);
             }
           }
 
@@ -567,9 +535,9 @@ class ExpensesReportView {
                   ".col-12",
                   m("input.form-control", {
                     type: "date",
-                    value: this.model.filter.start || "",
+                    value: this.model.filter.periodStart || "",
                     oninput: function (event) {
-                      this.model.filter.start = event.target.value;
+                      this.model.filter.periodStart = event.target.value;
                       this._fetchReport();
                     }.bind(this),
                   }),
@@ -578,9 +546,9 @@ class ExpensesReportView {
                   ".col-12",
                   m("input.form-control", {
                     type: "date",
-                    value: this.model.filter.end || "",
+                    value: this.model.filter.periodEnd || "",
                     oninput: function (event) {
-                      this.model.filter.end = event.target.value;
+                      this.model.filter.periodEnd = event.target.value;
                       this._fetchReport();
                     }.bind(this),
                   }),
@@ -689,9 +657,9 @@ class ExpensesReportView {
                 }.bind(this),
                 onChange: function (table, state) {
                   this.model.matrix = this._tableToMatrix(table);
-                  const updated = this.model.ensureMinimumEmptySpace();
+                  const newEmptyCellsAdded = this.model.ensureMinimumEmptySpace();
 
-                  if (updated) {
+                  if (newEmptyCellsAdded) {
                     state.isSyncing = true;
                     this._refreshTableAppearance().then(function () {
                       state.isSyncing = false;

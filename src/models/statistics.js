@@ -3,22 +3,26 @@ const api = require("./api");
 
 class StatisticsFilter {
   constructor() {
-    this.from = null;
-    this.to = null;
+    this.periodStart = null;
+    this.periodEnd = null;
     this.campaignId = null;
     this.groupBy = null;
   }
 
   isReady() {
-    return this.from !== null && this.to !== null && this.campaignId !== null;
+    return (
+      this.periodStart !== null &&
+      this.periodEnd !== null &&
+      this.campaignId !== null
+    );
   }
 
-  periodStart() {
-    return Math.trunc(Date.parse(this.from) / 1000);
+  periodStartSeconds() {
+    return Math.trunc(Date.parse(this.periodStart) / 1000);
   }
 
-  periodEnd() {
-    return Math.trunc(Date.parse(this.to) / 1000);
+  periodEndSeconds() {
+    return Math.trunc(Date.parse(this.periodEnd) / 1000);
   }
 }
 
@@ -35,8 +39,8 @@ class StatisticsModel {
     }
 
     var parameters = {
-      periodStart: this.filter.periodStart(),
-      periodEnd: this.filter.periodEnd(),
+      periodStart: this.filter.periodStartSeconds(),
+      periodEnd: this.filter.periodEndSeconds(),
       campaignId: this.filter.campaignId,
     };
 
