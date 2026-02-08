@@ -681,9 +681,7 @@ class ExpensesReportView {
                         {
                           type: "button",
                           disabled:
-                            this.isSaving ||
-                            !this.model.filter.isReady() ||
-                            this.validationErrors.length > 0,
+                            this.isSaving || this.validationErrors.length > 0,
                           onclick: function () {
                             this._saveReport();
                           }.bind(this),
