@@ -22,6 +22,12 @@ class ExpensesReportModel {
     this.records = [];
     this.matrix = null;
     this.distributionParameter = "";
+    this.distributionParameterLocked = false;
+    this.campaigns = [];
+    this.campaignError = null;
+    this.distributionParameters = [];
+    this.distributionParameterError = null;
+    this.distributionParameterValuesError = null;
     this.isLoading = false;
     this.error = null;
   }
@@ -69,6 +75,101 @@ class ExpensesReportModel {
       .catch(function () {
         this.error = "Failed to load expenses report.";
         this.isLoading = false;
+      }.bind(this));
+  }
+
+  loadCampaigns() {
+    return api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
+      })
+      .then(function (payload) {
+        this.campaigns = payload.content || [];
+        this.campaignError = null;
+      }.bind(this))
+      .catch(function () {
+        this.campaigns = [];
+        this.campaignError = "Failed to load campaigns.";
+      }.bind(this));
+  }
+
+  loadDistributionParameters(campaignId) {
+    if (!campaignId) {
+      this.distributionParameters = [];
+      return Promise.resolve();
+    }
+
+    return api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/reports/helpers/expenses-distribution-parameters`,
+        params: {
+          campaignId: campaignId,
+        },
+      })
+      .then(function (payload) {
+        this.distributionParameters = payload || [];
+        this.distributionParameterError = null;
+      }.bind(this))
+      .catch(function () {
+        this.distributionParameters = [];
+        this.distributionParameterError =
+          "Failed to load distribution parameters.";
+      }.bind(this));
+  }
+
+  loadDistributionParameterValues(campaignId, parameter) {
+    if (!campaignId || !parameter) {
+      return Promise.resolve();
+    }
+
+    return api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/reports/helpers/expenses-distribution-parameter-values`,
+        params: {
+          campaignId: campaignId,
+          parameter: parameter,
+        },
+      })
+      .then(function (payload) {
+        const values = (payload || []).map(function (item) {
+          return item.value;
+        });
+        this.setHeaderKeys(values);
+        this.distributionParameterValuesError = null;
+      }.bind(this))
+      .catch(function () {
+        this.distributionParameterValuesError =
+          "Failed to load distribution parameter values.";
+      }.bind(this));
+  }
+
+  loadCampaignDetails(campaignId) {
+    if (!campaignId) {
+      this.distributionParameterLocked = false;
+      return Promise.resolve();
+    }
+
+    return api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
+      })
+      .then(function (payload) {
+        const param = payload ? payload.expensesDistributionParameter : null;
+        if (param !== null && param !== undefined && param !== "") {
+          this.distributionParameter = param;
+          this.distributionParameterLocked = true;
+          return this.loadDistributionParameterValues(campaignId, param);
+        }
+
+        this.distributionParameterLocked = false;
+        return null;
+      }.bind(this))
+      .catch(function () {
+        this.distributionParameterLocked = false;
       }.bind(this));
   }
 
@@ -197,6 +298,37 @@ class ExpensesReportModel {
     }
 
     return Math.max(1, this.matrix[0].length);
+  }
+
+  setHeaderKeys(keys) {
+    const safeKeys = Array.isArray(keys) ? keys : [];
+    const baseWidth = Math.max(1, safeKeys.length + 1);
+
+    if (!this.matrix || this.matrix.length === 0) {
+      this.matrix = [new Array(baseWidth).fill("")];
+    }
+
+    const headerRow = new Array(baseWidth).fill("");
+    safeKeys.forEach(function (key, index) {
+      headerRow[index + 1] = key;
+    });
+
+    this.matrix[0] = headerRow;
+
+    for (let i = 1; i < this.matrix.length; i += 1) {
+      const row = Array.isArray(this.matrix[i]) ? this.matrix[i] : [];
+      if (row.length < baseWidth) {
+        while (row.length < baseWidth) {
+          row.push("");
+        }
+      } else if (row.length > baseWidth) {
+        row.length = baseWidth;
+      }
+      this.matrix[i] = row;
+    }
+
+    this._ensureEmptyRows();
+    this._ensureEmptyColumns();
   }
 }
 

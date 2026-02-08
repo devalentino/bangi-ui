@@ -5,7 +5,6 @@ const AutocompleteModule = require("@trevoreyre/autocomplete-js");
 const Tabulator =
   tabulatorModule.TabulatorFull || tabulatorModule.default || tabulatorModule;
 const Autocomplete = AutocompleteModule.default || AutocompleteModule;
-const api = require("../models/api");
 const ExpensesReportModel = require("../models/expenses_report");
 
 function normalizeExpenseValue(value) {
@@ -83,37 +82,34 @@ const ExpensesReportTable = {
 class ExpensesReportView {
   constructor() {
     this.model = new ExpensesReportModel();
-    this.campaigns = [];
     this.table = null;
     this.isSaving = false;
     this.saveError = null;
     this.saveSuccess = null;
     this.distributionParameterAutocomplete = null;
     this.distributionParameterAutocompleteRoot = null;
-    this.distributionParameters = [];
-    this.distributionParameterError = null;
-    this.distributionParameterLocked = false;
     this.validationErrors = [];
   }
 
   oninit() {
     setDefaultDateRange(this.model.filter, "periodStart", "periodEnd");
 
-    api
-      .request({
-        method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
-      })
-      .then(function (payload) {
-        this.campaigns = payload.content || [];
-
-        if (this.campaigns.length > 0) {
-          this.model.filter.campaignId = Number(this.campaigns[0].id);
-          this.fetchDistributionParameters(this.model.filter.campaignId);
-          this.fetchCampaignDetails(this.model.filter.campaignId);
+    this.model.loadCampaigns().then(
+      function () {
+        if (this.model.campaigns.length > 0) {
+          this.model.filter.campaignId = Number(this.model.campaigns[0].id);
+          this.model.loadDistributionParameters(this.model.filter.campaignId);
+          this.model
+            .loadCampaignDetails(this.model.filter.campaignId)
+            .then(
+              function () {
+                this._refreshTableAppearance();
+              }.bind(this),
+            );
           this._fetchReport();
         }
-      }.bind(this));
+      }.bind(this),
+    );
   }
 
   onremove() {
@@ -125,58 +121,6 @@ class ExpensesReportView {
     }
   }
 
-  fetchDistributionParameters(campaignId) {
-    if (!campaignId) {
-      this.distributionParameters = [];
-      return;
-    }
-
-    api
-      .request({
-        method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/reports/helpers/expenses-distribution-parameters`,
-        params: {
-          campaignId: campaignId,
-        },
-      })
-      .then(function (payload) {
-        this.distributionParameters = payload || [];
-        this.distributionParameterError = null;
-      }.bind(this))
-      .catch(function () {
-        this.distributionParameters = [];
-        this.distributionParameterError =
-          "Failed to load distribution parameters.";
-      }.bind(this));
-  }
-
-  fetchCampaignDetails(campaignId) {
-    if (!campaignId) {
-      this.distributionParameterLocked = false;
-      return;
-    }
-
-    api
-      .request({
-        method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
-      })
-      .then(function (payload) {
-        const param = payload ? payload.expensesDistributionParameter : null;
-        if (param !== null && param !== undefined && param !== "") {
-          this.model.distributionParameter = param;
-          this.distributionParameterLocked = true;
-        } else {
-          this.distributionParameterLocked = false;
-        }
-        this.saveError = null;
-        this.saveSuccess = null;
-      }.bind(this))
-      .catch(function () {
-        this.distributionParameterLocked = false;
-      }.bind(this));
-  }
-
   initDistributionParameterAutocomplete(root) {
     if (this.distributionParameterAutocomplete) {
       return;
@@ -185,15 +129,15 @@ class ExpensesReportView {
     this.distributionParameterAutocompleteRoot = root;
     this.distributionParameterAutocomplete = new Autocomplete(root, {
       search: function (input) {
-        if (this.distributionParameterLocked) {
+        if (this.model.distributionParameterLocked) {
           return Promise.resolve([]);
         }
 
-        const query = (input).toLowerCase();
+        const query = (input || "").toLowerCase();
 
         return Promise.resolve(
-          this.distributionParameters.filter(function (item) {
-            const value = (item.parameter).toLowerCase();
+          this.model.distributionParameters.filter(function (item) {
+            const value = (item.parameter || "").toLowerCase();
             return value.includes(query);
           }),
         );
@@ -209,11 +153,21 @@ class ExpensesReportView {
         </li>`;
       },
       onSubmit: function (result) {
-        if (this.distributionParameterLocked) {
+        if (this.model.distributionParameterLocked) {
           return;
         }
 
         this.model.distributionParameter = result.parameter;
+        this.model
+          .loadDistributionParameterValues(
+            this.model.filter.campaignId,
+            result.parameter,
+          )
+          .then(
+            function () {
+              this._refreshTableAppearance();
+            }.bind(this),
+          );
         this.saveError = null;
         this.saveSuccess = null;
       }.bind(this),
@@ -569,16 +523,22 @@ class ExpensesReportView {
                     oninput: function (event) {
                       this.model.filter.campaignId = Number(event.target.value);
                       this.model.distributionParameter = "";
-                      this.distributionParameterLocked = false;
-                      this.fetchDistributionParameters(
+                      this.model.distributionParameterLocked = false;
+                      this.model.loadDistributionParameters(
                         this.model.filter.campaignId,
                       );
-                      this.fetchCampaignDetails(this.model.filter.campaignId);
+                      this.model
+                        .loadCampaignDetails(this.model.filter.campaignId)
+                        .then(
+                          function () {
+                            this._refreshTableAppearance();
+                          }.bind(this),
+                        );
                       this._fetchReport();
                     }.bind(this),
                     value: this.model.filter.campaignId,
                   },
-                  this.campaigns.map(function (campaign) {
+                  this.model.campaigns.map(function (campaign) {
                     return m("option", { value: campaign.id }, campaign.name);
                   }),
                 ),
@@ -606,7 +566,7 @@ class ExpensesReportView {
                       value: this.model.distributionParameter,
                       disabled: this.model.matrix === null,
                       placeholder: "Select distribution parameter",
-                      readonly: this.distributionParameterLocked,
+                      readonly: this.model.distributionParameterLocked,
                       oninput: function (event) {
                         this.model.distributionParameter = event.target.value;
                         this.saveError = null;
@@ -621,10 +581,16 @@ class ExpensesReportView {
                   ],
                 ),
               ]),
-              this.distributionParameterError
+              this.model.distributionParameterError
                 ? m(
                     "div.text-danger.small.mt-2",
-                    this.distributionParameterError,
+                    this.model.distributionParameterError,
+                  )
+                : null,
+              this.model.distributionParameterValuesError
+                ? m(
+                    "div.text-danger.small.mt-2",
+                    this.model.distributionParameterValuesError,
                   )
                 : null,
             ]),
