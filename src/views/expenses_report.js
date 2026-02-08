@@ -88,8 +88,8 @@ class ExpensesReportView {
     this.isSaving = false;
     this.saveError = null;
     this.saveSuccess = null;
-    this.autocomplete = null;
-    this.autocompleteRoot = null;
+    this.distributionParameterAutocomplete = null;
+    this.distributionParameterAutocompleteRoot = null;
     this.distributionParameters = [];
     this.distributionParameterError = null;
     this.distributionParameterLocked = false;
@@ -117,8 +117,11 @@ class ExpensesReportView {
   }
 
   onremove() {
-    if (this.autocomplete && this.autocomplete.destroy) {
-      this.autocomplete.destroy();
+    if (
+      this.distributionParameterAutocomplete &&
+      this.distributionParameterAutocomplete.destroy
+    ) {
+      this.distributionParameterAutocomplete.destroy();
     }
   }
 
@@ -171,23 +174,23 @@ class ExpensesReportView {
       }.bind(this));
   }
 
-  initAutocomplete(root) {
-    if (this.autocomplete) {
+  initDistributionParameterAutocomplete(root) {
+    if (this.distributionParameterAutocomplete) {
       return;
     }
 
-    this.autocompleteRoot = root;
-    this.autocomplete = new Autocomplete(root, {
+    this.distributionParameterAutocompleteRoot = root;
+    this.distributionParameterAutocomplete = new Autocomplete(root, {
       search: function (input) {
         if (this.distributionParameterLocked) {
           return Promise.resolve([]);
         }
 
-        const query = (input || "").toLowerCase();
+        const query = (input).toLowerCase();
 
         return Promise.resolve(
           this.distributionParameters.filter(function (item) {
-            const value = (item.parameter || "").toLowerCase();
+            const value = (item.parameter).toLowerCase();
             return value.includes(query);
           }),
         );
@@ -331,10 +334,6 @@ class ExpensesReportView {
   }
 
   _markInvalid(cell, message) {
-    if (!cell) {
-      return;
-    }
-
     const element = cell.getElement();
     element.classList.add("is-invalid");
     if (message) {
@@ -356,21 +355,20 @@ class ExpensesReportView {
     const headerRow = rows[0];
     const columnCount = this.model.matrix[0].length;
 
+    // Ensure column with value has distribution key
     if (headerRow) {
       for (let i = 1; i < columnCount; i += 1) {
         const field = `c${i}`;
         const hasValue = rows.slice(1).some(function (row) {
           const cell = row.getCell(field);
-          if (!cell) {
-            return false;
-          }
           const value = cell.getValue();
           return value !== null && value !== undefined && value !== "";
         });
 
         if (hasValue) {
           const headerCell = headerRow.getCell(field);
-          const headerValue = headerCell ? headerCell.getValue() : "";
+          const headerValue = headerCell.getValue();
+
           const headerValid =
             typeof headerValue === "string" && headerValue.trim() !== "";
 
@@ -383,17 +381,16 @@ class ExpensesReportView {
       }
     }
 
+    // Ensure rest of table is valid
     rows.slice(1).forEach(
       function (row, rowIndex) {
         const dateCell = row.getCell("date");
-        const dateValue = dateCell ? dateCell.getValue() : "";
+        const dateValue = dateCell.getValue();
         let hasValues = false;
 
+        // ensure every row with value has date
         for (let i = 1; i < columnCount; i += 1) {
           const cell = row.getCell(`c${i}`);
-          if (!cell) {
-            continue;
-          }
           const value = cell.getValue();
           if (value !== null && value !== undefined && value !== "") {
             hasValues = true;
@@ -423,11 +420,9 @@ class ExpensesReportView {
           }
         }
 
+        // ensure distribution values are valid
         for (let i = 1; i < columnCount; i += 1) {
           const cell = row.getCell(`c${i}`);
-          if (!cell) {
-            continue;
-          }
 
           const value = cell.getValue();
           if (value === null || value === undefined || value === "") {
@@ -448,34 +443,29 @@ class ExpensesReportView {
   }
 
   _buildSavePayload() {
-    const rows = this.table ? this.table.getData() : [];
-    const headerRow = rows[0] || {};
+    const headerRow = this.model.matrix[0] || [];
     const columnCount = this.model.matrix[0].length;
 
-    const dates = rows
+    const dates = matrix
       .slice(1)
       .filter(function (row) {
-        return row.date !== null && row.date !== undefined && row.date !== "";
+        return row && row[0] !== null && row[0] !== undefined && row[0] !== "";
       })
-      .map(
-        function (row) {
-          const distribution = {};
+      .map(function (row) {
+        const distribution = {};
 
-          for (let i = 1; i < columnCount; i += 1) {
-            const rawKey = headerRow[`c${i}`];
-            const key =
-              typeof rawKey === "string" ? rawKey.trim() : rawKey;
-            if (key !== null && key !== undefined && key !== "") {
-              distribution[key] = normalizeExpenseValue(row[`c${i}`]);
-            }
+        for (let i = 1; i < columnCount; i += 1) {
+          const key = headerRow[i].trim();
+          if (key !== null && key !== undefined && key !== "") {
+            distribution[key] = normalizeExpenseValue(row[i]);
           }
+        }
 
-          return {
-            date: row.date,
-            distribution: distribution,
-          };
-        }.bind(this),
-      );
+        return {
+          date: row[0],
+          distribution: distribution,
+        };
+      });
 
     return {
       campaignId: Number(this.model.filter.campaignId),
@@ -604,7 +594,7 @@ class ExpensesReportView {
                   "div.autocomplete",
                   {
                     oncreate: function (node) {
-                      this.initAutocomplete(node.dom);
+                      this.initDistributionParameterAutocomplete(node.dom);
                     }.bind(this),
                   },
                   [
