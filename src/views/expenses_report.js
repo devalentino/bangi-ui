@@ -217,6 +217,10 @@ class ExpensesReportView {
   }
 
   _buildTableFromMatrix() {
+    if (!this.model.matrix || this.model.matrix.length === 0) {
+      return { columns: [], rows: [] };
+    }
+
     const columnCount = this.model.matrix[0].length;
     const columns = [
       {
@@ -607,7 +611,8 @@ class ExpensesReportView {
                     m("input.form-control", {
                       type: "text",
                       value: this.model.distributionParameter,
-                      placeholder: "Enter distribution parameter",
+                      disabled: this.model.matrix === null,
+                      placeholder: "Select distribution parameter",
                       readonly: this.distributionParameterLocked,
                       oninput: function (event) {
                         this.model.distributionParameter = event.target.value;
@@ -632,84 +637,87 @@ class ExpensesReportView {
             ]),
           ),
         ]),
-        m(".row.g-4.mt-1", [
-          m(".col-12", [
-            m(".bg-light.rounded.p-4", [
-              m(
-                ".d-flex.align-items-center.justify-content-between.mb-3",
-                m("h6.mb-0", "Expenses Report"),
-              ),
-              this.model.error
-                ? m("div.text-danger.mb-3", this.model.error)
-                : null,
-              this.model.isLoading
-                ? m("div.mb-3", "Loading report...")
-                : null,
-              m(ExpensesReportTable, {
-                columns: tableState.columns,
-                rows: tableState.rows,
-                onReady: function (table) {
-                  this.table = table;
-                  this._validateTable();
-                }.bind(this),
-                onValidate: function () {
-                  this._validateTable();
-                }.bind(this),
-                onChange: function (table, state) {
-                  this.model.matrix = this._tableToMatrix(table);
-                  const newEmptyCellsAdded = this.model.ensureMinimumEmptySpace();
+        this.model.matrix !== null
+          ? m(".row.g-4.mt-1", [
+              m(".col-12", [
+                m(".bg-light.rounded.p-4", [
+                  m(
+                    ".d-flex.align-items-center.justify-content-between.mb-3",
+                    m("h6.mb-0", "Expenses Report"),
+                  ),
+                  this.model.error
+                    ? m("div.text-danger.mb-3", this.model.error)
+                    : null,
+                  this.model.isLoading
+                    ? m("div.mb-3", "Loading report...")
+                    : null,
+                  m(ExpensesReportTable, {
+                    columns: tableState.columns,
+                    rows: tableState.rows,
+                    onReady: function (table) {
+                      this.table = table;
+                      this._validateTable();
+                    }.bind(this),
+                    onValidate: function () {
+                      this._validateTable();
+                    }.bind(this),
+                    onChange: function (table, state) {
+                      this.model.matrix = this._tableToMatrix(table);
+                      const newEmptyCellsAdded =
+                        this.model.ensureMinimumEmptySpace();
 
-                  if (newEmptyCellsAdded) {
-                    state.isSyncing = true;
-                    this._refreshTableAppearance().then(function () {
-                      state.isSyncing = false;
-                    });
-                  }
-                }.bind(this),
-              }),
-              m(".mt-3", [
-                m(".d-flex.flex-column.flex-md-row.gap-2", [
-                  m(
-                    "button.btn.btn-primary",
-                    {
-                      type: "button",
-                      disabled:
-                        this.isSaving ||
-                        !this.model.filter.isReady() ||
-                        this.validationErrors.length > 0,
-                      onclick: function () {
-                        this._saveReport();
-                      }.bind(this),
-                    },
-                    this.isSaving ? "Saving..." : "Save Report",
-                  ),
-                  m(
-                    "button.btn.btn-outline-secondary",
-                    {
-                      type: "button",
-                      onclick: function () {
-                        this._resetToOriginal();
-                      }.bind(this),
-                    },
-                    "Reset",
-                  ),
+                      if (newEmptyCellsAdded) {
+                        state.isSyncing = true;
+                        this._refreshTableAppearance().then(function () {
+                          state.isSyncing = false;
+                        });
+                      }
+                    }.bind(this),
+                  }),
+                  m(".mt-3", [
+                    m(".d-flex.flex-column.flex-md-row.gap-2", [
+                      m(
+                        "button.btn.btn-primary",
+                        {
+                          type: "button",
+                          disabled:
+                            this.isSaving ||
+                            !this.model.filter.isReady() ||
+                            this.validationErrors.length > 0,
+                          onclick: function () {
+                            this._saveReport();
+                          }.bind(this),
+                        },
+                        this.isSaving ? "Saving..." : "Save Report",
+                      ),
+                      m(
+                        "button.btn.btn-outline-secondary",
+                        {
+                          type: "button",
+                          onclick: function () {
+                            this._resetToOriginal();
+                          }.bind(this),
+                        },
+                        "Reset",
+                      ),
+                    ]),
+                    this.validationErrors.length > 0
+                      ? m(
+                          "div.text-danger.mt-2",
+                          `Validation errors: ${this.validationErrors.length}`,
+                        )
+                      : null,
+                    this.saveError
+                      ? m("div.text-danger.mt-2", this.saveError)
+                      : null,
+                    this.saveSuccess
+                      ? m("div.text-success.mt-2", this.saveSuccess)
+                      : null,
+                  ]),
                 ]),
-                this.validationErrors.length > 0
-                  ? m(
-                      "div.text-danger.mt-2",
-                      `Validation errors: ${this.validationErrors.length}`,
-                    )
-                  : null,
-                this.saveError
-                  ? m("div.text-danger.mt-2", this.saveError)
-                  : null,
-                this.saveSuccess
-                  ? m("div.text-success.mt-2", this.saveSuccess)
-                  : null,
               ]),
-            ]),
-          ]),
-        ]),
+            ])
+          : null,
       ],
     );
   }
