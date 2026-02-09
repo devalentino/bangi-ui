@@ -158,7 +158,7 @@ class ExpensesReportModel {
       })
       .then(function (payload) {
         this.distributionParameter = payload.expensesDistributionParameter;
-        this.distributionParameterLocked = true;
+        this.distributionParameterLocked = this.distributionParameter !== null;
         return null;
       }.bind(this))
       .catch(function () {
@@ -350,10 +350,12 @@ class ExpensesReportModel {
         const distribution = {};
 
         for (let i = 1; i < columnCount; i += 1) {
-          const key = headerRow[i].trim();
-          if (key !== null) {
-            distribution[key] = row[i];
+          if (headerRow[i] === null) {
+            return;
           }
+
+          const key = headerRow[i].trim();
+          distribution[key] = row[i];
         }
 
         return {

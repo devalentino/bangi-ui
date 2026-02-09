@@ -506,7 +506,6 @@ class ExpensesReportView {
                     m("input.form-control", {
                       type: "text",
                       value: this.model.distributionParameter,
-                      disabled: this.model.matrix === null,
                       placeholder: "Select distribution parameter",
                       readonly: this.model.distributionParameterLocked,
                       oninput: function (event) {
