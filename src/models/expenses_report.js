@@ -351,7 +351,7 @@ class ExpensesReportModel {
 
         for (let i = 1; i < columnCount; i += 1) {
           if (headerRow[i] === null) {
-            return;
+            continue;
           }
 
           const key = headerRow[i].trim();
