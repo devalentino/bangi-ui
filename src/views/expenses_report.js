@@ -7,7 +7,7 @@ const Tabulator =
 const Autocomplete = AutocompleteModule.default || AutocompleteModule;
 const ExpensesReportModel = require("../models/expenses_report");
 
-function normalizeExpenseValue(value) {
+function normalizeMatrixValue(value) {
   if (value === "" || value === null || value === undefined) {
     return null;
   }
@@ -83,9 +83,6 @@ class ExpensesReportView {
   constructor() {
     this.model = new ExpensesReportModel();
     this.table = null;
-    this.isSaving = false;
-    this.saveError = null;
-    this.saveSuccess = null;
     this.distributionParameterAutocomplete = null;
     this.distributionParameterAutocompleteRoot = null;
     this.validationErrors = [];
@@ -162,8 +159,8 @@ class ExpensesReportView {
               this._refreshTableAppearance();
             }.bind(this),
           );
-        this.saveError = null;
-        this.saveSuccess = null;
+        this.model.saveError = null;
+        this.model.saveSuccess = null;
       }.bind(this),
       autoSelect: true,
       submitOnEnter: true,
@@ -213,10 +210,10 @@ class ExpensesReportView {
     const data = table.getData();
 
     return data.map(function (row) {
-      const values = new Array(columnCount).fill("");
-      values[0] = row.date || "";
+      const values = new Array(columnCount).fill(null);
+      values[0] = row.date || null;
       for (let i = 1; i < columnCount; i += 1) {
-        values[i] = row[`c${i}`] !== undefined ? row[`c${i}`] : "";
+        values[i] = normalizeMatrixValue(row[`c${i}`]);
       }
       return values;
     });
@@ -393,72 +390,27 @@ class ExpensesReportView {
     this.validationErrors = errors;
   }
 
-  _buildSavePayload() {
-    const headerRow = this.model.matrix[0] || [];
-    const columnCount = this.model.matrix[0].length;
-
-    const dates = matrix
-      .slice(1)
-      .filter(function (row) {
-        return row && row[0] !== null && row[0] !== undefined && row[0] !== "";
-      })
-      .map(function (row) {
-        const distribution = {};
-
-        for (let i = 1; i < columnCount; i += 1) {
-          const key = headerRow[i].trim();
-          if (key !== null && key !== undefined && key !== "") {
-            distribution[key] = normalizeExpenseValue(row[i]);
-          }
-        }
-
-        return {
-          date: row[0],
-          distribution: distribution,
-        };
-      });
-
-    return {
-      campaignId: Number(this.model.filter.campaignId),
-      distributionParameter: this.model.distributionParameter,
-      dates: dates,
-    };
-  }
-
   _saveReport() {
     this._validateTable();
     if (this.validationErrors.length > 0) {
-      this.saveError = "Fix validation errors before saving.";
-      this.saveSuccess = null;
+      this.model.saveError = "Fix validation errors before saving.";
+      this.model.saveSuccess = null;
       return;
     }
 
     if (!this.model.distributionParameter) {
-      this.saveError = "Distribution parameter is required for saving.";
-      this.saveSuccess = null;
+      this.model.saveError = "Distribution parameter is required for saving.";
+      this.model.saveSuccess = null;
       return;
     }
 
-    this.isSaving = true;
-    this.saveError = null;
-    this.saveSuccess = null;
-
-    api
-      .request({
-        method: "POST",
-        url: `${process.env.BACKEND_API_BASE_URL}/reports/expenses`,
-        body: this._buildSavePayload(),
-      })
+    this.model
+      .saveReport(this.model.buildSavePayload())
       .then(function () {
-        this.isSaving = false;
-        this.saveSuccess = "Report saved.";
         this.validationErrors = [];
         this._fetchReport();
       }.bind(this))
-      .catch(function () {
-        this.isSaving = false;
-        this.saveError = "Failed to save report.";
-      }.bind(this));
+      .catch(function () {});
   }
 
   view() {
@@ -559,8 +511,8 @@ class ExpensesReportView {
                       readonly: this.model.distributionParameterLocked,
                       oninput: function (event) {
                         this.model.distributionParameter = event.target.value;
-                        this.saveError = null;
-                        this.saveSuccess = null;
+                        this.model.saveError = null;
+                        this.model.saveSuccess = null;
                       }.bind(this),
                     }),
                     m(
@@ -630,12 +582,13 @@ class ExpensesReportView {
                         {
                           type: "button",
                           disabled:
-                            this.isSaving || this.validationErrors.length > 0,
+                            this.model.isSaving ||
+                            this.validationErrors.length > 0,
                           onclick: function () {
                             this._saveReport();
                           }.bind(this),
                         },
-                        this.isSaving ? "Saving..." : "Save Report",
+                        this.model.isSaving ? "Saving..." : "Save Report",
                       ),
                       m(
                         "button.btn.btn-outline-secondary",
@@ -654,11 +607,11 @@ class ExpensesReportView {
                           `Validation errors: ${this.validationErrors.length}`,
                         )
                       : null,
-                    this.saveError
-                      ? m("div.text-danger.mt-2", this.saveError)
+                    this.model.saveError
+                      ? m("div.text-danger.mt-2", this.model.saveError)
                       : null,
-                    this.saveSuccess
-                      ? m("div.text-success.mt-2", this.saveSuccess)
+                    this.model.saveSuccess
+                      ? m("div.text-success.mt-2", this.model.saveSuccess)
                       : null,
                   ]),
                 ]),

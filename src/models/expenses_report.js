@@ -30,6 +30,9 @@ class ExpensesReportModel {
     this.distributionParameterValuesError = null;
     this.isLoading = false;
     this.error = null;
+    this.isSaving = false;
+    this.saveError = null;
+    this.saveSuccess = null;
   }
 
   loadExpensesReport() {
@@ -154,18 +157,33 @@ class ExpensesReportModel {
         url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
       })
       .then(function (payload) {
-        const param = payload ? payload.expensesDistributionParameter : null;
-        if (param !== null && param !== undefined && param !== "") {
-          this.distributionParameter = param;
-          this.distributionParameterLocked = true;
-          return null;
-        }
-
-        this.distributionParameterLocked = false;
+        this.distributionParameter = payload.expensesDistributionParameter;
+        this.distributionParameterLocked = true;
         return null;
       }.bind(this))
       .catch(function () {
         this.distributionParameterLocked = false;
+      }.bind(this));
+  }
+
+  saveReport(payload) {
+    this.isSaving = true;
+    this.saveError = null;
+    this.saveSuccess = null;
+
+    return api
+      .request({
+        method: "POST",
+        url: `${process.env.BACKEND_API_BASE_URL}/reports/expenses`,
+        body: payload,
+      })
+      .then(function () {
+        this.isSaving = false;
+        this.saveSuccess = "Report saved.";
+      }.bind(this))
+      .catch(function () {
+        this.isSaving = false;
+        this.saveError = "Failed to save report.";
       }.bind(this));
   }
 
@@ -214,13 +232,7 @@ class ExpensesReportModel {
   }
 
   _isRowEmpty(row) {
-    if (!row) {
-      return true;
-    }
-
-    return row.every(function (value) {
-      return value === null || value === undefined || value === "";
-    });
+    return row.every(function (value) {return value === null});
   }
 
   _ensureEmptyRows() {
@@ -251,7 +263,7 @@ class ExpensesReportModel {
 
     for (let i = headerRow.length - 1; i >= 1 && trailingEmptyColumns < 2; i -= 1) {
       const value = headerRow[i];
-      if (value === null || value === undefined || value === "") {
+      if (value === null) {
         trailingEmptyColumns += 1;
       } else {
         break;
@@ -325,6 +337,36 @@ class ExpensesReportModel {
 
     this._ensureEmptyRows();
     this._ensureEmptyColumns();
+  }
+
+  buildSavePayload() {
+    const headerRow = this.matrix[0];
+    const columnCount = headerRow.length;
+
+    const dates = this.matrix
+      .slice(1)
+      .filter(function (row) {return row && row[0] !== null})
+      .map(function (row) {
+        const distribution = {};
+
+        for (let i = 1; i < columnCount; i += 1) {
+          const key = headerRow[i].trim();
+          if (key !== null) {
+            distribution[key] = row[i];
+          }
+        }
+
+        return {
+          date: row[0],
+          distribution: distribution,
+        };
+      });
+
+    return {
+      campaignId: Number(this.filter.campaignId),
+      distributionParameter: this.distributionParameter,
+      dates: dates,
+    };
   }
 }
 
