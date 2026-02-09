@@ -373,13 +373,21 @@ class ExpensesReportView {
           const cell = row.getCell(`c${i}`);
 
           const value = cell.getValue();
-          if (value === null || value === undefined || value === "") {
+          const headerValue = headerRow.getCell(`c${i}`).getValue();
+          if (
+            (value === null || value === undefined || value === "")
+            && (headerValue !== null && headerValue !== undefined && headerValue !== "")
+            && (dateValue !== null && dateValue !== undefined && dateValue !== "")
+          ) {
+            const message = `Value should not be empty in row ${rowIndex + 2}.`;
+            this._markInvalid(cell, message);
+            errors.push(message);
             continue;
           }
 
           const numeric = Number(value);
           if (Number.isNaN(numeric) || numeric < 0) {
-            const message = `Invalid value in row ${rowIndex + 2}.`;
+            const message = `Value should be number in row ${rowIndex + 2}.`;
             this._markInvalid(cell, message);
             errors.push(message);
           }

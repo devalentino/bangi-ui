@@ -206,14 +206,14 @@ class ExpensesReportModel {
 
     const width = Math.max(1, distributionKeys.length + 1);
 
-    const headerRow = new Array(width).fill("");
+    const headerRow = new Array(width).fill(null);
     distributionKeys.forEach(function (key, index) {
       headerRow[index + 1] = key;
     });
 
     const rows = this.records.map(function (record) {
-      const row = new Array(width).fill("");
-      row[0] = record.date || "";
+      const row = new Array(width).fill(null);
+      row[0] = record.date || null;
 
       const distribution = record.distribution || {};
       distributionKeys.forEach(function (key, index) {
@@ -247,7 +247,7 @@ class ExpensesReportModel {
     }
 
     while (emptyTrailingRows < 2) {
-      const row = new Array(this._matrixColumnCount()).fill("");
+      const row = new Array(this._matrixColumnCount()).fill(null);
       this.matrix.push(row);
       emptyTrailingRows += 1;
     }
@@ -255,7 +255,7 @@ class ExpensesReportModel {
 
   _ensureEmptyColumns() {
     if (this.matrix.length === 0) {
-      this.matrix = [new Array(1).fill("")];
+      this.matrix = [new Array(1).fill(null)];
     }
 
     const headerRow = this.matrix[0] || [];
@@ -278,7 +278,7 @@ class ExpensesReportModel {
 
     this.matrix.forEach(function (row) {
       for (let i = 0; i < needed; i += 1) {
-        row.push("");
+        row.push(null);
       }
     });
   }
@@ -313,10 +313,10 @@ class ExpensesReportModel {
     const baseWidth = Math.max(1, safeKeys.length + 1);
 
     if (!this.matrix || this.matrix.length === 0) {
-      this.matrix = [new Array(baseWidth).fill("")];
+      this.matrix = [new Array(baseWidth).fill(null)];
     }
 
-    const headerRow = new Array(baseWidth).fill("");
+    const headerRow = new Array(baseWidth).fill(null);
     safeKeys.forEach(function (key, index) {
       headerRow[index + 1] = key;
     });
@@ -324,10 +324,10 @@ class ExpensesReportModel {
     this.matrix[0] = headerRow;
 
     for (let i = 1; i < this.matrix.length; i += 1) {
-      const row = Array.isArray(this.matrix[i]) ? this.matrix[i] : [];
+      const row = this.matrix[i];
       if (row.length < baseWidth) {
         while (row.length < baseWidth) {
-          row.push("");
+          row.push(null);
         }
       } else if (row.length > baseWidth) {
         row.length = baseWidth;
