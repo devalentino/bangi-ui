@@ -99,13 +99,7 @@ class ExpensesReportView {
         if (this.model.campaigns.length > 0) {
           this.model.filter.campaignId = Number(this.model.campaigns[0].id);
           this.model.loadDistributionParameters(this.model.filter.campaignId);
-          this.model
-            .loadCampaignDetails(this.model.filter.campaignId)
-            .then(
-              function () {
-                this._refreshTableAppearance();
-              }.bind(this),
-            );
+          this.model.loadCampaignDetails(this.model.filter.campaignId);
           this._fetchReport();
         }
       }.bind(this),
@@ -249,7 +243,7 @@ class ExpensesReportView {
   }
 
   _fetchReport() {
-    return this.model.fetch().then(
+    return this.model.loadExpensesReport().then(
       function () {
         return this._refreshTableAppearance();
       }.bind(this),
@@ -527,13 +521,9 @@ class ExpensesReportView {
                       this.model.loadDistributionParameters(
                         this.model.filter.campaignId,
                       );
-                      this.model
-                        .loadCampaignDetails(this.model.filter.campaignId)
-                        .then(
-                          function () {
-                            this._refreshTableAppearance();
-                          }.bind(this),
-                        );
+                      this.model.loadCampaignDetails(
+                        this.model.filter.campaignId,
+                      );
                       this._fetchReport();
                     }.bind(this),
                     value: this.model.filter.campaignId,

@@ -21,18 +21,18 @@ class ExpensesReportModel {
     this.filter = new ExpensesReportFilter();
     this.records = [];
     this.matrix = null;
-    this.distributionParameter = "";
-    this.distributionParameterLocked = false;
     this.campaigns = [];
     this.campaignError = null;
-    this.distributionParameters = [];
+    this.distributionParameter = "";
     this.distributionParameterError = null;
+    this.distributionParameterLocked = false;
+    this.distributionParameters = [];
     this.distributionParameterValuesError = null;
     this.isLoading = false;
     this.error = null;
   }
 
-  fetch() {
+  loadExpensesReport() {
     if (!this.filter.isReady()) {
       return Promise.resolve();
     }
@@ -64,11 +64,7 @@ class ExpensesReportModel {
         },
       })
       .then(function (payload) {
-        const content = Array.isArray(payload.content)
-          ? payload.content
-          : (payload.content && payload.content.content) || [];
-
-        this.records = content || [];
+        this.records = payload.content;
         this.isLoading = false;
         this._buildMatrix();
       }.bind(this))
@@ -85,7 +81,7 @@ class ExpensesReportModel {
         url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
       })
       .then(function (payload) {
-        this.campaigns = payload.content || [];
+        this.campaigns = payload.content;
         this.campaignError = null;
       }.bind(this))
       .catch(function () {
@@ -109,7 +105,7 @@ class ExpensesReportModel {
         },
       })
       .then(function (payload) {
-        this.distributionParameters = payload || [];
+        this.distributionParameters = payload;
         this.distributionParameterError = null;
       }.bind(this))
       .catch(function () {
@@ -134,7 +130,7 @@ class ExpensesReportModel {
         },
       })
       .then(function (payload) {
-        const values = (payload || []).map(function (item) {
+        const values = (payload).map(function (item) {
           return item.value;
         });
         this.setHeaderKeys(values);
@@ -162,7 +158,7 @@ class ExpensesReportModel {
         if (param !== null && param !== undefined && param !== "") {
           this.distributionParameter = param;
           this.distributionParameterLocked = true;
-          return this.loadDistributionParameterValues(campaignId, param);
+          return null;
         }
 
         this.distributionParameterLocked = false;
