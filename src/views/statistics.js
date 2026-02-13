@@ -126,6 +126,13 @@ function computeRoi(payouts, expenses) {
   return ((normalizeNumber(payouts) - expenseValue) / expenseValue) * 100;
 }
 
+function getExpectedPayouts(statuses) {
+  return (
+    getStatusPayouts(statuses, "accept") +
+    getStatusPayouts(statuses, "expect")
+  );
+}
+
 function extractRows(report, groupParameters) {
   let rows = [];
   let dates = getReportDates(report);
@@ -343,6 +350,9 @@ class FilterView {
 }
 
 const Chart = {
+  oninit: function (vnode) {
+    vnode.state.activeTab = "clicks";
+  },
   view: function (vnode) {
     let model = vnode.attrs.model;
     if (model.report === null) return;
@@ -371,6 +381,45 @@ const Chart = {
       }
       return getStatusLeads(metrics.statuses || {}, "accept");
     });
+    let acceptedPayoutsDatasets = buildMetricDatasets(rows, dates, function (metrics) {
+      if (!metrics) {
+        return 0;
+      }
+      return getStatusPayouts(metrics.statuses || {}, "accept");
+    });
+    let expectedPayoutsDatasets = buildMetricDatasets(rows, dates, function (metrics) {
+      if (!metrics) {
+        return 0;
+      }
+      return getExpectedPayouts(metrics.statuses || {});
+    });
+    let expensesDatasets = buildMetricDatasets(rows, dates, function (metrics) {
+      if (!metrics) {
+        return null;
+      }
+      if (metrics.expenses === null || metrics.expenses === undefined) {
+        return null;
+      }
+      return normalizeNumber(metrics.expenses);
+    });
+    let roiAcceptedDatasets = buildMetricDatasets(rows, dates, function (metrics) {
+      if (!metrics) {
+        return null;
+      }
+      if (metrics.roi_accepted !== null && metrics.roi_accepted !== undefined) {
+        return Number(metrics.roi_accepted);
+      }
+      return computeRoi(getStatusPayouts(metrics.statuses || {}, "accept"), metrics.expenses);
+    });
+    let roiExpectedDatasets = buildMetricDatasets(rows, dates, function (metrics) {
+      if (!metrics) {
+        return null;
+      }
+      if (metrics.roi_expected !== null && metrics.roi_expected !== undefined) {
+        return Number(metrics.roi_expected);
+      }
+      return computeRoi(getExpectedPayouts(metrics.statuses || {}), metrics.expenses);
+    });
 
     clicksDatasets = Object.keys(clicksDatasets).map(function (groupByValue) {
       return {
@@ -397,6 +446,50 @@ const Chart = {
         label: groupByValue,
         data: acceptedLeadsDatasets[groupByValue],
         fill: true,
+        cubicInterpolationMode: "monotone",
+      };
+    });
+    acceptedPayoutsDatasets = Object.keys(acceptedPayoutsDatasets).map(function (
+      groupByValue
+    ) {
+      return {
+        label: groupByValue,
+        data: acceptedPayoutsDatasets[groupByValue],
+        fill: true,
+        cubicInterpolationMode: "monotone",
+      };
+    });
+    expectedPayoutsDatasets = Object.keys(expectedPayoutsDatasets).map(function (
+      groupByValue
+    ) {
+      return {
+        label: groupByValue,
+        data: expectedPayoutsDatasets[groupByValue],
+        fill: true,
+        cubicInterpolationMode: "monotone",
+      };
+    });
+    expensesDatasets = Object.keys(expensesDatasets).map(function (groupByValue) {
+      return {
+        label: groupByValue,
+        data: expensesDatasets[groupByValue],
+        fill: true,
+        cubicInterpolationMode: "monotone",
+      };
+    });
+    roiAcceptedDatasets = Object.keys(roiAcceptedDatasets).map(function (groupByValue) {
+      return {
+        label: groupByValue,
+        data: roiAcceptedDatasets[groupByValue],
+        fill: false,
+        cubicInterpolationMode: "monotone",
+      };
+    });
+    roiExpectedDatasets = Object.keys(roiExpectedDatasets).map(function (groupByValue) {
+      return {
+        label: groupByValue,
+        data: roiExpectedDatasets[groupByValue],
+        fill: false,
         cubicInterpolationMode: "monotone",
       };
     });
@@ -448,47 +541,130 @@ const Chart = {
         },
       },
     };
+    const acceptedPayoutsChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: acceptedPayoutsDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+    const expectedPayoutsChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: expectedPayoutsDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+    const expensesChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: expensesDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+    const roiAcceptedChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: roiAcceptedDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+    const roiExpectedChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: roiExpectedDatasets,
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
 
-    return [
-      m(
-        "div.container-fluid.pt-4.px-4",
-        m(
-          "div.row.g-4",
-          [
-            m(
-              "div.col-12.col-md-6.col-xl-6",
-              m("div.bg-light.rounded.h-100.p-4", [
-                m("h6.mb-4", "Clicks"),
-                m(ChartComponent, {chartOptions: clicksChartOptions}),
-              ]),
+    let tabs = [
+      { id: "clicks", title: "Clicks", options: clicksChartOptions },
+      { id: "leads", title: "Leads", options: leadsChartOptions },
+      { id: "accepted-leads", title: "Leads (accepted)", options: acceptedLeadsChartOptions },
+      { id: "accepted-payouts", title: "Payouts", options: acceptedPayoutsChartOptions },
+      { id: "expected-payouts", title: "Payouts (expected)", options: expectedPayoutsChartOptions },
+      { id: "expenses", title: "Expenses", options: expensesChartOptions },
+      { id: "roi-accepted", title: "ROI", options: roiAcceptedChartOptions },
+      { id: "roi-expected", title: "ROI (expected)", options: roiExpectedChartOptions },
+    ];
+
+    let activeTab = vnode.state.activeTab || tabs[0].id;
+    let active = tabs.find(function (tab) { return tab.id === activeTab; }) || tabs[0];
+
+    return m(
+      "div.container-fluid.pt-4.px-4",
+      m("div.row.g-4",
+        m("div.col-12",
+          m("div.bg-light.rounded.h-100.p-4", [
+            m("ul.nav.nav-tabs.mb-3", { role: "tablist" },
+              tabs.map(function (tab) {
+                let isActive = tab.id === active.id;
+                return m("li.nav-item", { role: "presentation" },
+                  m(
+                    "button.nav-link",
+                    {
+                      type: "button",
+                      class: isActive ? "active" : "",
+                      role: "tab",
+                      onclick: function () {
+                        vnode.state.activeTab = tab.id;
+                      },
+                    },
+                    tab.title
+                  )
+                );
+              })
             ),
-            m(
-              "div.col-12.col-md-6.col-xl-6",
-              m("div.bg-light.rounded.h-100.p-4", [
-                m("h6.mb-4", "Leads"),
-                m(ChartComponent, {chartOptions: leadsChartOptions}),
-              ]),
+            m("div.tab-content",
+              m("div.tab-pane.fade.show.active", { role: "tabpanel" }, [
+                m("h6.mb-4", active.title),
+                m(ChartComponent, { chartOptions: active.options }),
+              ])
             ),
-          ],
-        ),
-      ),
-      m("div.container-fluid.pt-4.px-4",
-        m(
-          "div.row.g-4",
-          [
-            m(
-              "div.col-12.col-md-6.col-xl-6",
-              m("div.bg-light.rounded.h-100.p-4",
-                [
-                  m("h6.mb-4", "Accepted Leads"),
-                  m(ChartComponent, {chartOptions: acceptedLeadsChartOptions}),
-                ]
-              ),
-            ),
-          ]
+          ])
         )
       )
-    ]
+    );
   },
 };
 
