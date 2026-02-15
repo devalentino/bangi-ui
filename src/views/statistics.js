@@ -673,7 +673,11 @@ const Table = {
     let trs = [];
     report.forEach(function (row) {
       let statuses = row.statuses || {};
-      let expenses = row.expenses;
+      let dateLevel = row.dateLevel || {};
+      let expenses =
+        groupByKey !== null
+          ? dateLevel.expenses
+          : row.expenses;
       let expensesLabel =
         expenses === null || expenses === undefined
           ? "—"
@@ -681,22 +685,45 @@ const Table = {
               let value = Number(expenses);
               return Number.isFinite(value) ? value.toFixed(2) : "—";
             })();
-      let roiAccepted = row.roi_accepted;
-      let roiExpected = row.roi_expected;
+      let roiAccepted =
+        groupByKey !== null
+          ? dateLevel.roi_accepted
+          : row.roi_accepted;
+      let roiExpected =
+        groupByKey !== null
+          ? dateLevel.roi_expected
+          : row.roi_expected;
 
       if (roiAccepted === null || roiAccepted === undefined) {
-        roiAccepted = computeRoi(getStatusPayouts(statuses, "accept"), expenses);
+        if (groupByKey !== null) {
+          roiAccepted = computeRoi(
+            getStatusPayouts(dateLevel.statuses || {}, "accept"),
+            expenses
+          );
+        } else {
+          roiAccepted = computeRoi(getStatusPayouts(statuses, "accept"), expenses);
+        }
       }
       if (roiExpected === null || roiExpected === undefined) {
-        roiExpected = computeRoi(
-          getStatusPayouts(statuses, "accept") + getStatusPayouts(statuses, "expect"),
-          expenses
-        );
+        if (groupByKey !== null) {
+          roiExpected = computeRoi(
+            getStatusPayouts(dateLevel.statuses || {}, "accept") +
+              getStatusPayouts(dateLevel.statuses || {}, "expect"),
+            expenses
+          );
+        } else {
+          roiExpected = computeRoi(
+            getStatusPayouts(statuses, "accept") + getStatusPayouts(statuses, "expect"),
+            expenses
+          );
+        }
       }
 
       trs.push(
         m("tr", [
-          m("td", row.date),
+          ...(groupByKey === null || row.isDateHead
+            ? [m("td", groupByKey !== null ? { rowspan: row.rowspan } : {}, row.date)]
+            : []),
           ...(groupByKey !== null ? [m("td", row[groupByKey])] : []),
           m("td", row.clicks),
           m("td", getStatusLeads(statuses, "accept")),
@@ -705,25 +732,37 @@ const Table = {
           m("td", getStatusLeads(statuses, "trash")),
           m("td", getStatusPayouts(statuses, "accept")),
           m("td", getStatusPayouts(statuses, "expect")),
-          m("td", expensesLabel),
-          m(
-            "td",
-            roiAccepted === null || roiAccepted === undefined
-              ? "—"
-              : (function () {
-                  let value = Number(roiAccepted);
-                  return Number.isFinite(value) ? value.toFixed(2) : "—";
-                })()
-          ),
-          m(
-            "td",
-            roiExpected === null || roiExpected === undefined
-              ? "—"
-              : (function () {
-                  let value = Number(roiExpected);
-                  return Number.isFinite(value) ? value.toFixed(2) : "—";
-                })()
-          ),
+          ...(groupByKey === null || row.isDateHead
+            ? [m("td", groupByKey !== null ? { rowspan: row.rowspan } : {}, expensesLabel)]
+            : []),
+          ...(groupByKey === null || row.isDateHead
+            ? [
+                m(
+                  "td",
+                  groupByKey !== null ? { rowspan: row.rowspan } : {},
+                  roiAccepted === null || roiAccepted === undefined
+                    ? "—"
+                    : (function () {
+                        let value = Number(roiAccepted);
+                        return Number.isFinite(value) ? value.toFixed(2) : "—";
+                      })()
+                ),
+              ]
+            : []),
+          ...(groupByKey === null || row.isDateHead
+            ? [
+                m(
+                  "td",
+                  groupByKey !== null ? { rowspan: row.rowspan } : {},
+                  roiExpected === null || roiExpected === undefined
+                    ? "—"
+                    : (function () {
+                        let value = Number(roiExpected);
+                        return Number.isFinite(value) ? value.toFixed(2) : "—";
+                      })()
+                ),
+              ]
+            : []),
         ]),
       );
     });
@@ -749,6 +788,7 @@ const Table = {
 
     let grouped = rows.map(function (row) {
       let groupValueLabel = row.groupValue === null ? "Total" : row.groupValue;
+      let dateLevelMetrics = aggregateNode(model.report[row.date] || {});
       return {
         date: row.date,
         clicks: row.metrics.clicks,
@@ -756,11 +796,36 @@ const Table = {
         expenses: row.metrics.expenses,
         roi_accepted: row.metrics.roi_accepted,
         roi_expected: row.metrics.roi_expected,
+        dateLevel: {
+          statuses: dateLevelMetrics.statuses || {},
+          expenses: dateLevelMetrics.expenses,
+          roi_accepted: dateLevelMetrics.roi_accepted,
+          roi_expected: dateLevelMetrics.roi_expected,
+        },
         ...(groupByKey !== null
           ? { [groupByKey]: groupValueLabel }
           : {}),
       };
     });
+
+    if (groupByKey !== null) {
+      let rowsPerDate = {};
+      grouped.forEach(function (row) {
+        rowsPerDate[row.date] = (rowsPerDate[row.date] || 0) + 1;
+      });
+
+      let seenDates = {};
+      grouped = grouped.map(function (row) {
+        let isDateHead = !seenDates[row.date];
+        if (isDateHead) {
+          seenDates[row.date] = true;
+        }
+        return Object.assign({}, row, {
+          isDateHead: isDateHead,
+          rowspan: rowsPerDate[row.date],
+        });
+      });
+    }
 
     return m(
       "div.container-fluid.pt-4.px-4",
