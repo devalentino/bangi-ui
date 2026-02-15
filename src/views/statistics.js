@@ -8,14 +8,13 @@ function getClicks(statisticsContainer, groupParameters) {
     return statisticsContainer.clicks;
   }
 
-  let sum = 0;
-  Object.values(statisticsContainer).filter(function (value) {
-    return value !== null && typeof value === 'object';
-  }).forEach(function (stats) {
-    sum += getClicks(stats, groupParameters.slice(1));
-  });
-
-  return sum;
+  let distribution = {};
+  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+    if (stats !== null && typeof stats === 'object') {
+      distribution[distributionValue] = getClicks(stats, groupParameters.slice(1));
+    }
+  }
+  return distribution;
 }
 
 function getLeads(statisticsContainer, groupParameters, status) {
@@ -92,6 +91,42 @@ function getExpenses(statisticsContainer) {
   });
 
   return sum;
+}
+
+function distribution2ChartJsDataset(distribution, defaultLabel) {
+  if (distribution.every(function(el) {return typeof el === "number"})) {
+    return [{
+      label: defaultLabel,
+      data: distribution,
+      fill: true,
+      cubicInterpolationMode: "monotone",
+    }]
+  }
+
+  const datasets = {};
+
+  for (const i in distribution) {
+    const statisticsContainer = distribution[i];
+    for (const [distributionValue, value] of Object.entries(statisticsContainer)) {
+      if (!Object.hasOwn(datasets, distributionValue)) {
+        datasets[distributionValue] = [];
+      }
+
+      datasets[distributionValue].push(value);
+    }
+  }
+
+  const datasetsChartJs = [];
+  for (const [distributionValue, dataset] of Object.entries(datasets)) {
+    datasetsChartJs.push({
+      label: distributionValue,
+      data: dataset,
+      fill: true,
+      cubicInterpolationMode: "monotone",
+    });
+  }
+
+  return datasetsChartJs;
 }
 
 class FilterView {
@@ -250,12 +285,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Clicks",
-          data: clicks,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(clicks, "Clicks"),
       },
       options: {
         responsive: true,
@@ -271,12 +301,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Leads",
-          data: leads,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(leads, "Leads"),
       },
       options: {
         responsive: true,
@@ -292,12 +317,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Leads Accepted",
-          data: leadsAccepted,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(leadsAccepted, "Leads Accepted"),
       },
       options: {
         responsive: true,
@@ -313,12 +333,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Payouts",
-          data: payoutsAccepted,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(payoutsAccepted, "Payouts"),
       },
       options: {
         responsive: true,
@@ -334,12 +349,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Expected Payouts",
-          data: payoutsExpected,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(payoutsExpected, "Payouts (expected)"),
       },
       options: {
         responsive: true,
@@ -355,12 +365,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Expenses",
-          data: expenses,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(expenses, "Expenses"),
       },
       options: {
         responsive: true,
@@ -376,12 +381,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "ROI",
-          data: roiAccepted,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(roiAccepted, "ROI"),
       },
       options: {
         responsive: true,
@@ -397,12 +397,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: [{
-          label: "Expected ROI",
-          data: roiAccepted,
-          fill: true,
-          cubicInterpolationMode: "monotone",
-        }],
+        datasets: distribution2ChartJsDataset(roiExpected, "ROI (expected)"),
       },
       options: {
         responsive: true,
