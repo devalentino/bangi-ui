@@ -32,9 +32,37 @@ class StatisticsModel {
     this.report = null;
     this.parameters = null;
     this.groupParameters = null;
+    this.campaigns = [];
+    this.campaignError = null;
+    this.activeChartTab = "clicks";
   }
 
-  fetch() {
+  loadCampaigns() {
+    return api
+      .request({
+        method: "GET",
+        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
+      })
+      .then(function (payload) {
+        this.campaigns = payload.content;
+        this.campaignError = null;
+      }.bind(this))
+      .catch(function () {
+        this.campaigns = [];
+        this.campaignError = "Failed to load campaigns.";
+      }.bind(this));
+  }
+
+  initialize() {
+    return this.loadCampaigns().then(function () {
+      if (this.filter.campaignId === null && this.campaigns.length > 0) {
+        this.filter.campaignId = this.campaigns[0].id;
+      }
+      this.loadStatisticsReport();
+    }.bind(this));
+  }
+
+  loadStatisticsReport() {
     if (!this.filter.isReady()) {
       return;
     }

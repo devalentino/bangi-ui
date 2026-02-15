@@ -1,7 +1,6 @@
 let m = require("mithril");
 let StatisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
-let api = require("../models/api");
 let { setDefaultDateRange } = require("../utils/date");
 
 const METRIC_KEYS = ["statuses", "clicks", "expenses", "roi_accepted", "roi_expected"];
@@ -225,25 +224,13 @@ function buildMetricDatasets(rows, dates, metricFn) {
 }
 
 class FilterView {
-  constructor(vnode) {
-    this.model = vnode.attrs.model;
-    this.campaigns = [];
+  constructor(model) {
+    this.model = model;
   }
 
   oninit() {
     setDefaultDateRange(this.model.filter, "periodStart", "periodEnd");
-
-    api.request({
-      method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
-    }).then(function (payload) {
-      this.campaigns = payload.content || [];
-
-      if (this.campaigns.length > 0) {
-        this.model.filter.campaignId = this.campaigns[0].id;
-        this.model.fetch();
-      }
-    }.bind(this));
+    this.model.initialize();
   }
 
   view() {
@@ -265,7 +252,7 @@ class FilterView {
                     value: this.model.filter.periodStart || "",
                     oninput: function (event) {
                       this.model.filter.periodStart = event.target.value;
-                      this.model.fetch();
+                      this.model.loadStatisticsReport();
                     }.bind(this),
                   }),
                 ),
@@ -276,7 +263,7 @@ class FilterView {
                     value: this.model.filter.periodEnd || "",
                     oninput: function (event) {
                       this.model.filter.periodEnd = event.target.value;
-                      this.model.fetch();
+                      this.model.loadStatisticsReport();
                     }.bind(this),
                   }),
                 ),
@@ -298,11 +285,11 @@ class FilterView {
                   "aria-label": "Campaign",
                   oninput: function (event) {
                     this.model.filter.campaignId = event.target.value;
-                    this.model.fetch();
+                    this.model.loadStatisticsReport();
                   }.bind(this),
                   value: this.model.filter.campaignId,
                 },
-                this.campaigns.map(function (campaign) {
+                this.model.campaigns.map(function (campaign) {
                   return m("option", { value: campaign.id }, campaign.name);
                 }),
               ),
@@ -325,14 +312,14 @@ class FilterView {
                   disabled: this.model.parameters === null,
                   oninput: function (event) {
                     this.model.filter.groupBy = event.target.value || null;
-                    this.model.fetch();
+                    this.model.loadStatisticsReport();
                   }.bind(this),
                   value: this.model.filter.groupBy || "",
                 },
                 [
                   m("option", { value: "" }, "Select group"),
                 ].concat(
-                  (this.model.parameters || []).map(function (parameter) {
+                  (this.model.parameters).map(function (parameter) {
                     return m(
                       "option",
                       { value: parameter },
@@ -350,12 +337,12 @@ class FilterView {
 }
 
 class ChartView {
-  oninit(vnode) {
-    vnode.state.activeTab = "clicks";
+  constructor(model) {
+    this.model = model;
   }
 
-  view(vnode) {
-    let model = vnode.attrs.model;
+  view() {
+    let model = this.model;
     if (model.report === null) return;
 
     let dates = getReportDates(model.report);
@@ -629,7 +616,7 @@ class ChartView {
       { id: "roi-expected", title: "ROI (expected)", options: roiExpectedChartOptions },
     ];
 
-    let activeTab = vnode.state.activeTab || tabs[0].id;
+    let activeTab = model.activeChartTab || tabs[0].id;
     let active = tabs.find(function (tab) { return tab.id === activeTab; }) || tabs[0];
 
     return m(
@@ -648,7 +635,7 @@ class ChartView {
                       class: isActive ? "active" : "",
                       role: "tab",
                       onclick: function () {
-                        vnode.state.activeTab = tab.id;
+                        model.activeChartTab = tab.id;
                       },
                     },
                     tab.title
@@ -670,6 +657,10 @@ class ChartView {
 }
 
 class TableView {
+  constructor(model) {
+    this.model = model;
+  }
+
   _buildTrs(report, groupByKey) {
     let trs = [];
     report.forEach(function (row) {
@@ -770,8 +761,8 @@ class TableView {
     return trs;
   }
 
-  view(vnode) {
-    let model = vnode.attrs.model;
+  view() {
+    let model = this.model;
     if (model.report === null) return;
 
     let groupByKey =
@@ -869,13 +860,16 @@ class TableView {
 class StatisticsView {
   constructor() {
     this.model = new StatisticsModel();
+    this.filterView = new FilterView(this.model);
+    this.chartView = new ChartView(this.model);
+    this.tableView = new TableView(this.model);
   }
 
   view() {
     return [
-      m(FilterView, { model: this.model }),
-      m(ChartView, { model: this.model }),
-      m(TableView, { model: this.model }),
+      m(this.filterView),
+      m(this.chartView),
+      m(this.tableView),
     ];
   }
 }
