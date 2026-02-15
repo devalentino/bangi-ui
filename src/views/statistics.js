@@ -349,11 +349,12 @@ class FilterView {
   }
 }
 
-const Chart = {
-  oninit: function (vnode) {
+class ChartView {
+  oninit(vnode) {
     vnode.state.activeTab = "clicks";
-  },
-  view: function (vnode) {
+  }
+
+  view(vnode) {
     let model = vnode.attrs.model;
     if (model.report === null) return;
 
@@ -665,11 +666,11 @@ const Chart = {
         )
       )
     );
-  },
-};
+  }
+}
 
-const Table = {
-  _build_trs: function (report, groupByKey) {
+class TableView {
+  _buildTrs(report, groupByKey) {
     let trs = [];
     report.forEach(function (row) {
       let statuses = row.statuses || {};
@@ -767,9 +768,9 @@ const Table = {
       );
     });
     return trs;
-  },
+  }
 
-  view: function (vnode) {
+  view(vnode) {
     let model = vnode.attrs.model;
     if (model.report === null) return;
 
@@ -855,15 +856,15 @@ const Table = {
                     m("th", {scope: "col"}, "ROI Expected"),
                   ]),
                 ),
-                m("tbody", Table._build_trs(grouped, groupByKey)),
+                m("tbody", this._buildTrs(grouped, groupByKey)),
               ]),
             ),
           ]),
         ),
       ),
     );
-  },
-};
+  }
+}
 
 class StatisticsView {
   constructor() {
@@ -873,8 +874,8 @@ class StatisticsView {
   view() {
     return [
       m(FilterView, { model: this.model }),
-      m(Chart, { model: this.model }),
-      m(Table, { model: this.model }),
+      m(ChartView, { model: this.model }),
+      m(TableView, { model: this.model }),
     ];
   }
 }
