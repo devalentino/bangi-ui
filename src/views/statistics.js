@@ -319,7 +319,7 @@ class FilterView {
                 [
                   m("option", { value: "" }, "Select group"),
                 ].concat(
-                  (this.model.parameters).map(function (parameter) {
+                  (this.model.parameters || []).map(function (parameter) {
                     return m(
                       "option",
                       { value: parameter },
@@ -342,11 +342,11 @@ class ChartView {
   }
 
   view() {
-    let model = this.model;
-    if (model.report === null) return;
+    if (this.model.report === null) return;
 
-    let dates = getReportDates(model.report);
-    let rows = extractRows(model.report, model.groupParameters);
+    console.log(this.model.report);
+    let dates = getReportDates(this.model.report);
+    let rows = extractRows(this.model.report, this.model.groupParameters);
     let clicksDatasets = buildMetricDatasets(rows, dates, function (metrics) {
       return metrics ? metrics.clicks : 0;
     });
@@ -616,7 +616,7 @@ class ChartView {
       { id: "roi-expected", title: "ROI (expected)", options: roiExpectedChartOptions },
     ];
 
-    let activeTab = model.activeChartTab || tabs[0].id;
+    let activeTab = this.model.activeChartTab || tabs[0].id;
     let active = tabs.find(function (tab) { return tab.id === activeTab; }) || tabs[0];
 
     return m(
@@ -635,7 +635,7 @@ class ChartView {
                       class: isActive ? "active" : "",
                       role: "tab",
                       onclick: function () {
-                        model.activeChartTab = tab.id;
+                        this.model.activeChartTab = tab.id;
                       },
                     },
                     tab.title
