@@ -17,12 +17,12 @@ class StatisticsFilter {
     );
   }
 
-  periodStartSeconds() {
-    return Math.trunc(Date.parse(this.periodStart) / 1000);
+  periodStartIsoDate() {
+    return new Date(this.periodStart).toISOString().slice(0, 10);
   }
 
-  periodEndSeconds() {
-    return Math.trunc(Date.parse(this.periodEnd) / 1000);
+  periodEndIsoDate() {
+    return new Date(this.periodEnd).toISOString().slice(0, 10);
   }
 }
 
@@ -40,8 +40,8 @@ class StatisticsModel {
     }
 
     var parameters = {
-      periodStart: this.filter.periodStartSeconds(),
-      periodEnd: this.filter.periodEndSeconds(),
+      periodStart: this.filter.periodStartIsoDate(),
+      periodEnd: this.filter.periodEndIsoDate(),
       campaignId: this.filter.campaignId,
     };
 
