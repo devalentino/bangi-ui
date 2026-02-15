@@ -3,224 +3,95 @@ let StatisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
 let { setDefaultDateRange } = require("../utils/date");
 
-const METRIC_KEYS = ["statuses", "clicks", "expenses", "roi_accepted", "roi_expected"];
-
-function isPlainObject(value) {
-  return value && typeof value === "object" && !Array.isArray(value);
-}
-
-function normalizeNumber(value) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return value;
+function getClicks(statisticsContainer, groupParameters) {
+  if (groupParameters.length === 0) {
+    return statisticsContainer.clicks;
   }
 
-  if (value === null || value === undefined || value === "") {
-    return 0;
-  }
-
-  let numeric = Number(value);
-  if (Number.isFinite(numeric)) {
-    return numeric;
-  }
-
-  return 0;
-}
-
-function mergeStatuses(target, source) {
-  if (!isPlainObject(source)) {
-    return;
-  }
-
-  Object.keys(source).forEach(function (status) {
-    let entry = source[status] || {};
-    if (!target[status]) {
-      target[status] = { leads: 0, payouts: 0 };
-    }
-    target[status].leads += normalizeNumber(entry.leads);
-    target[status].payouts += normalizeNumber(entry.payouts);
-  });
-}
-
-function aggregateNode(node) {
-  let result = {
-    clicks: 0,
-    statuses: {},
-    expenses: null,
-    roi_accepted: null,
-    roi_expected: null,
-  };
-
-  if (!isPlainObject(node)) {
-    return result;
-  }
-
-  let hasExpenses = Object.prototype.hasOwnProperty.call(node, "expenses");
-  let hasRoiAccepted = Object.prototype.hasOwnProperty.call(node, "roi_accepted");
-  let hasRoiExpected = Object.prototype.hasOwnProperty.call(node, "roi_expected");
-
-  if (Object.prototype.hasOwnProperty.call(node, "clicks")) {
-    result.clicks += normalizeNumber(node.clicks);
-  }
-
-  if (Object.prototype.hasOwnProperty.call(node, "statuses")) {
-    mergeStatuses(result.statuses, node.statuses);
-  }
-
-  if (hasExpenses) {
-    result.expenses = normalizeNumber(node.expenses);
-  }
-  if (hasRoiAccepted) {
-    result.roi_accepted = node.roi_accepted;
-  }
-  if (hasRoiExpected) {
-    result.roi_expected = node.roi_expected;
-  }
-
-  Object.keys(node).forEach(function (key) {
-    if (METRIC_KEYS.includes(key)) {
-      return;
-    }
-
-    let child = node[key];
-    if (!isPlainObject(child)) {
-      return;
-    }
-
-    let childAgg = aggregateNode(child);
-    result.clicks += childAgg.clicks;
-    mergeStatuses(result.statuses, childAgg.statuses);
-
-    if (!hasExpenses && childAgg.expenses !== null) {
-      result.expenses =
-        result.expenses === null ? childAgg.expenses : result.expenses + childAgg.expenses;
-    }
+  let sum = 0;
+  Object.values(statisticsContainer).filter(function (value) {
+    return value !== null && typeof value === 'object';
+  }).forEach(function (stats) {
+    sum += getClicks(stats, groupParameters.slice(1));
   });
 
-  return result;
+  return sum;
 }
 
-function getReportDates(report) {
-  return Object.keys(report || {}).sort();
-}
-
-function getStatusLeads(statuses, status) {
-  if (!statuses || !statuses[status]) {
-    return 0;
-  }
-  return normalizeNumber(statuses[status].leads);
-}
-
-function getStatusPayouts(statuses, status) {
-  if (!statuses || !statuses[status]) {
-    return 0;
-  }
-  return normalizeNumber(statuses[status].payouts);
-}
-
-function computeRoi(payouts, expenses) {
-  let expenseValue = normalizeNumber(expenses);
-  if (!expenseValue) {
-    return null;
-  }
-  return ((normalizeNumber(payouts) - expenseValue) / expenseValue) * 100;
-}
-
-function getExpectedPayouts(statuses) {
-  return (
-    getStatusPayouts(statuses, "accept") +
-    getStatusPayouts(statuses, "expect")
-  );
-}
-
-function extractRows(report, groupParameters) {
-  let rows = [];
-  let dates = getReportDates(report);
-  let groupKey = groupParameters && groupParameters.length > 0 ? groupParameters[0] : null;
-
-  dates.forEach(function (date) {
-    let node = report[date] || {};
-
-    if (!groupKey) {
-      let agg = aggregateNode(node);
-      rows.push({
-        date: date,
-        groupValue: null,
-        metrics: agg,
-      });
-      return;
-    }
-
-    if (Object.keys(node).length === 0) {
-      return;
-    }
-
-    if (METRIC_KEYS.some(function (key) { return Object.prototype.hasOwnProperty.call(node, key); })) {
-      let agg = aggregateNode(node);
-      rows.push({
-        date: date,
-        groupValue: null,
-        metrics: agg,
-      });
-      return;
-    }
-
-    Object.keys(node).forEach(function (groupValue) {
-      let groupNode = node[groupValue];
-      let agg = aggregateNode(groupNode);
-
-      rows.push({
-        date: date,
-        groupValue: groupValue,
-        metrics: agg,
-      });
-    });
-  });
-
-  return rows;
-}
-
-function getGroupLabels(rows) {
-  let labels = [];
-
-  rows.forEach(function (row) {
-    let label = row.groupValue || "Total";
-    if (!labels.includes(label)) {
-      labels.push(label);
-    }
-  });
-
-  if (labels.length === 0) {
-    labels.push("Total");
+function getLeads(statisticsContainer, groupParameters, status) {
+  if (typeof status === "undefined") {
+    status = null;
   }
 
-  return labels;
+  if (groupParameters.length === 0) {
+    if (status !== null) {
+      if (Object.hasOwn(statisticsContainer.statuses, status)) {
+        return statisticsContainer.statuses[status].leads;
+      }
+
+      return 0;
+    } else {
+      return Object.values(statisticsContainer.statuses).map(function (container) {
+        return container.leads;
+      }).reduce(function(a, leads){ return a + leads}, 0);
+    }
+  }
+
+  let sum = 0;
+
+  Object.values(statisticsContainer).filter(function (value) {
+    return value !== null && typeof value === 'object';
+  }).forEach(function (stats) {
+    sum += getLeads(stats, groupParameters.slice(1), status);
+  })
+
+  return sum;
 }
 
-function buildMetricDatasets(rows, dates, metricFn) {
-  let labels = getGroupLabels(rows);
-  let map = {};
+function getPayouts(statisticsContainer, groupParameters, expected) {
+  if (typeof expected === "undefined") {
+    expected = false;
+  }
 
-  rows.forEach(function (row) {
-    let label = row.groupValue || "Total";
-    if (!map[row.date]) {
-      map[row.date] = {};
+  if (groupParameters.length === 0) {
+    let payouts = 0;
+
+    if (Object.hasOwn(statisticsContainer.statuses, "accept")) {
+      payouts += statisticsContainer.statuses.accept.payouts;
     }
-    map[row.date][label] = row.metrics;
+
+    if (expected && Object.hasOwn(statisticsContainer.statuses, "expect") ) {
+      payouts += statisticsContainer.statuses.expect.payouts;
+    }
+
+    return payouts;
+  }
+
+  let sum = 0;
+
+  Object.values(statisticsContainer).filter(function (value) {
+    return value !== null && typeof value === 'object';
+  }).forEach(function (stats) {
+    sum += getPayouts(stats, groupParameters.slice(1), expected);
   });
 
-  let datasets = {};
-  labels.forEach(function (label) {
-    datasets[label] = [];
+  return sum;
+}
+
+function getExpenses(statisticsContainer) {
+  if (Object.hasOwn(statisticsContainer, "expenses")) {
+    return statisticsContainer.expenses;
+  }
+
+  let sum = 0;
+
+  Object.values(statisticsContainer).filter(function (value) {
+    return value !== null && typeof value === 'object';
+  }).forEach(function (stats) {
+    sum += getExpenses(stats);
   });
 
-  dates.forEach(function (date) {
-    labels.forEach(function (label) {
-      let metrics = map[date] && map[date][label] ? map[date][label] : null;
-      datasets[label].push(metricFn(metrics));
-    });
-  });
-
-  return datasets;
+  return sum;
 }
 
 class FilterView {
@@ -344,149 +215,47 @@ class ChartView {
   view() {
     if (this.model.report === null) return;
 
-    console.log(this.model.report);
-    let dates = getReportDates(this.model.report);
-    let rows = extractRows(this.model.report, this.model.groupParameters);
-    let clicksDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      return metrics ? metrics.clicks : 0;
-    });
-    let leadsDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return 0;
-      }
+    let model = this.model;
 
-      let statuses = metrics.statuses || {};
-      return (
-        getStatusLeads(statuses, "accept") +
-        getStatusLeads(statuses, "expect") +
-        getStatusLeads(statuses, "reject") +
-        getStatusLeads(statuses, "trash")
-      );
-    });
-    let acceptedLeadsDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return 0;
-      }
-      return getStatusLeads(metrics.statuses || {}, "accept");
-    });
-    let acceptedPayoutsDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return 0;
-      }
-      return getStatusPayouts(metrics.statuses || {}, "accept");
-    });
-    let expectedPayoutsDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return 0;
-      }
-      return getExpectedPayouts(metrics.statuses || {});
-    });
-    let expensesDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return null;
-      }
-      if (metrics.expenses === null || metrics.expenses === undefined) {
-        return null;
-      }
-      return normalizeNumber(metrics.expenses);
-    });
-    let roiAcceptedDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return null;
-      }
-      if (metrics.roi_accepted !== null && metrics.roi_accepted !== undefined) {
-        return Number(metrics.roi_accepted);
-      }
-      return computeRoi(getStatusPayouts(metrics.statuses || {}, "accept"), metrics.expenses);
-    });
-    let roiExpectedDatasets = buildMetricDatasets(rows, dates, function (metrics) {
-      if (!metrics) {
-        return null;
-      }
-      if (metrics.roi_expected !== null && metrics.roi_expected !== undefined) {
-        return Number(metrics.roi_expected);
-      }
-      return computeRoi(getExpectedPayouts(metrics.statuses || {}), metrics.expenses);
+    let dates = Object.keys(model.report || {}).sort();
+    let clicks = Object.values(model.report).map(function (stats) {
+      return getClicks(stats, model.groupParameters);
     });
 
-    clicksDatasets = Object.keys(clicksDatasets).map(function (groupByValue) {
-      return {
-        label: groupByValue,
-        data: clicksDatasets[groupByValue],
-        fill: true,
-        cubicInterpolationMode: "monotone",
-      };
+    let leads = Object.values(model.report).map(function (stats) {
+      return getLeads(stats, model.groupParameters);
     });
-
-    leadsDatasets = Object.keys(leadsDatasets).map(function (groupByValue) {
-      return {
-        label: groupByValue,
-        data: leadsDatasets[groupByValue],
-        fill: true,
-        cubicInterpolationMode: "monotone",
-      };
+    let leadsAccepted = Object.values(model.report).map(function (stats) {
+      return getLeads(stats, model.groupParameters, 'accept');
     });
-
-    acceptedLeadsDatasets = Object.keys(acceptedLeadsDatasets).map(function (
-      groupByValue
-    ) {
-      return {
-        label: groupByValue,
-        data: acceptedLeadsDatasets[groupByValue],
-        fill: true,
-        cubicInterpolationMode: "monotone",
-      };
+    let payoutsAccepted = Object.values(model.report).map(function (stats) {
+      return getPayouts(stats, model.groupParameters, false);
     });
-    acceptedPayoutsDatasets = Object.keys(acceptedPayoutsDatasets).map(function (
-      groupByValue
-    ) {
-      return {
-        label: groupByValue,
-        data: acceptedPayoutsDatasets[groupByValue],
-        fill: true,
-        cubicInterpolationMode: "monotone",
-      };
+    let payoutsExpected = Object.values(model.report).map(function (stats) {
+      return getPayouts(stats, model.groupParameters, true);
     });
-    expectedPayoutsDatasets = Object.keys(expectedPayoutsDatasets).map(function (
-      groupByValue
-    ) {
-      return {
-        label: groupByValue,
-        data: expectedPayoutsDatasets[groupByValue],
-        fill: true,
-        cubicInterpolationMode: "monotone",
-      };
+    let expenses = Object.values(model.report).map(function (stats) {
+      return getExpenses(stats);
     });
-    expensesDatasets = Object.keys(expensesDatasets).map(function (groupByValue) {
-      return {
-        label: groupByValue,
-        data: expensesDatasets[groupByValue],
-        fill: true,
-        cubicInterpolationMode: "monotone",
-      };
+    let roiAccepted = payoutsAccepted.map(function (payout, i) {
+      let expense = expenses[i];
+      return (payout - expense) / expense * 100;
     });
-    roiAcceptedDatasets = Object.keys(roiAcceptedDatasets).map(function (groupByValue) {
-      return {
-        label: groupByValue,
-        data: roiAcceptedDatasets[groupByValue],
-        fill: false,
-        cubicInterpolationMode: "monotone",
-      };
-    });
-    roiExpectedDatasets = Object.keys(roiExpectedDatasets).map(function (groupByValue) {
-      return {
-        label: groupByValue,
-        data: roiExpectedDatasets[groupByValue],
-        fill: false,
-        cubicInterpolationMode: "monotone",
-      };
+    let roiExpected = payoutsExpected.map(function (payout, i) {
+      let expense = expenses[i];
+      return (payout - expense) / expense * 100;
     });
 
     const clicksChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: clicksDatasets,
+        datasets: [{
+          label: "Clicks",
+          data: clicks,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -502,7 +271,12 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: leadsDatasets,
+        datasets: [{
+          label: "Leads",
+          data: leads,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -514,11 +288,16 @@ class ChartView {
       },
     };
 
-    const acceptedLeadsChartOptions = {
+    const leadsAcceptedChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: acceptedLeadsDatasets,
+        datasets: [{
+          label: "Leads Accepted",
+          data: leadsAccepted,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -529,11 +308,17 @@ class ChartView {
         },
       },
     };
-    const acceptedPayoutsChartOptions = {
+
+    const payoutsAcceptedChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: acceptedPayoutsDatasets,
+        datasets: [{
+          label: "Payouts",
+          data: payoutsAccepted,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -544,11 +329,17 @@ class ChartView {
         },
       },
     };
-    const expectedPayoutsChartOptions = {
+
+    const payoutsExpectedChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: expectedPayoutsDatasets,
+        datasets: [{
+          label: "Expected Payouts",
+          data: payoutsExpected,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -559,11 +350,17 @@ class ChartView {
         },
       },
     };
+
     const expensesChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: expensesDatasets,
+        datasets: [{
+          label: "Expenses",
+          data: expenses,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -574,11 +371,17 @@ class ChartView {
         },
       },
     };
+
     const roiAcceptedChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: roiAcceptedDatasets,
+        datasets: [{
+          label: "ROI",
+          data: roiAccepted,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -589,11 +392,17 @@ class ChartView {
         },
       },
     };
+
     const roiExpectedChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: roiExpectedDatasets,
+        datasets: [{
+          label: "Expected ROI",
+          data: roiAccepted,
+          fill: true,
+          cubicInterpolationMode: "monotone",
+        }],
       },
       options: {
         responsive: true,
@@ -608,15 +417,15 @@ class ChartView {
     let tabs = [
       { id: "clicks", title: "Clicks", options: clicksChartOptions },
       { id: "leads", title: "Leads", options: leadsChartOptions },
-      { id: "accepted-leads", title: "Leads (accepted)", options: acceptedLeadsChartOptions },
-      { id: "accepted-payouts", title: "Payouts", options: acceptedPayoutsChartOptions },
-      { id: "expected-payouts", title: "Payouts (expected)", options: expectedPayoutsChartOptions },
+      { id: "accepted-leads", title: "Leads (accepted)", options: leadsAcceptedChartOptions },
+      { id: "accepted-payouts", title: "Payouts", options: payoutsAcceptedChartOptions },
+      { id: "expected-payouts", title: "Payouts (expected)", options: payoutsExpectedChartOptions },
       { id: "expenses", title: "Expenses", options: expensesChartOptions },
       { id: "roi-accepted", title: "ROI", options: roiAcceptedChartOptions },
       { id: "roi-expected", title: "ROI (expected)", options: roiExpectedChartOptions },
     ];
 
-    let activeTab = this.model.activeChartTab || tabs[0].id;
+    let activeTab = model.activeChartTab || tabs[0].id;
     let active = tabs.find(function (tab) { return tab.id === activeTab; }) || tabs[0];
 
     return m(
@@ -635,7 +444,7 @@ class ChartView {
                       class: isActive ? "active" : "",
                       role: "tab",
                       onclick: function () {
-                        this.model.activeChartTab = tab.id;
+                        model.activeChartTab = tab.id;
                       },
                     },
                     tab.title
@@ -869,7 +678,7 @@ class StatisticsView {
     return [
       m(this.filterView),
       m(this.chartView),
-      m(this.tableView),
+      // m(this.tableView),
     ];
   }
 }
