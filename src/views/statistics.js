@@ -1,148 +1,8 @@
 let m = require("mithril");
 let StatisticsModel = require("../models/statistics");
 let ChartComponent = require("../components/chart");
+let ChartUtils = require("../utils/chart");
 let { setDefaultDateRange } = require("../utils/date");
-
-function getClicks(statisticsContainer, groupParameters) {
-  if (groupParameters.length === 0) {
-    return statisticsContainer.clicks;
-  }
-
-  let distribution = {};
-  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
-    if (stats !== null && typeof stats === 'object') {
-      distribution[distributionValue] = getClicks(stats, groupParameters.slice(1));
-    }
-  }
-  return distribution;
-}
-
-function getLeads(statisticsContainer, groupParameters, status) {
-  if (typeof status === "undefined") {
-    status = null;
-  }
-
-  if (groupParameters.length === 0) {
-    if (status !== null) {
-      return statisticsContainer.statuses[status].leads;
-    }
-
-    return Object.values(statisticsContainer.statuses).map(function (container) {
-      return container.leads;
-    }).reduce(function(a, leads){ return a + leads}, 0);
-  }
-
-  let distribution = {}
-  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
-    if (stats !== null && typeof stats === 'object') {
-      distribution[distributionValue] = getLeads(stats, groupParameters.slice(1), status);
-    }
-  }
-
-  return distribution;
-}
-
-function getPayouts(statisticsContainer, groupParameters, expected) {
-  if (typeof expected === "undefined") {
-    expected = false;
-  }
-
-  if (groupParameters.length === 0) {
-    let payouts = 0;
-
-    if (Object.hasOwn(statisticsContainer.statuses, "accept")) {
-      payouts += statisticsContainer.statuses.accept.payouts;
-    }
-
-    if (expected && Object.hasOwn(statisticsContainer.statuses, "expect") ) {
-      payouts += statisticsContainer.statuses.expect.payouts;
-    }
-
-    return payouts;
-  }
-
-  let distribution = {}
-  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
-    if (stats !== null && typeof stats === 'object') {
-      distribution[distributionValue] = getPayouts(stats, groupParameters.slice(1), expected);
-    }
-  }
-
-  return distribution;
-}
-
-function getExpenses(statisticsContainer) {
-  if (Object.hasOwn(statisticsContainer, "expenses")) {
-    return statisticsContainer.expenses;
-  }
-
-  let distribution = {}
-  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
-    if (stats !== null && typeof stats === 'object') {
-      distribution[distributionValue] = getExpenses(stats);
-    }
-  }
-
-  return distribution;
-}
-
-function getRoi(payout, expense) {
-  if (typeof payout === "object" && typeof expense === "object") {
-    let distribution = {};
-
-    for (const [distributionValue, stats] of Object.entries(payout)) {
-      distribution[distributionValue] = getRoi(stats, expense[distributionValue]);
-    }
-
-    return distribution;
-  }
-
-  if (typeof payout === "object" && typeof expense === "number") {
-    payout = Object.values(payout).reduce(function(a, payout){ return a + payout}, 0);
-  }
-
-  if (expense === 0) {
-    return 0;
-  }
-
-  return (payout - expense) / expense * 100;
-}
-
-function distribution2ChartJsDataset(distribution, defaultLabel) {
-  if (distribution.every(function(el) {return typeof el === "number"})) {
-    return [{
-      label: defaultLabel,
-      data: distribution,
-      fill: true,
-      cubicInterpolationMode: "monotone",
-    }]
-  }
-
-  const datasets = {};
-
-  for (const i in distribution) {
-    const statisticsContainer = distribution[i];
-    for (const [distributionValue, value] of Object.entries(statisticsContainer)) {
-      if (!Object.hasOwn(datasets, distributionValue)) {
-        datasets[distributionValue] = [];
-      }
-
-      datasets[distributionValue].push(value);
-    }
-  }
-
-  const datasetsChartJs = [];
-  for (const [distributionValue, dataset] of Object.entries(datasets)) {
-    datasetsChartJs.push({
-      label: distributionValue,
-      data: dataset,
-      fill: true,
-      cubicInterpolationMode: "monotone",
-    });
-  }
-
-  return datasetsChartJs;
-}
 
 class FilterView {
   constructor(model) {
@@ -269,38 +129,38 @@ class ChartView {
 
     let dates = Object.keys(model.report || {}).sort();
     let clicks = Object.values(model.report).map(function (stats) {
-      return getClicks(stats, model.groupParameters);
+      return ChartUtils.getClicks(stats, model.groupParameters);
     });
 
     let leads = Object.values(model.report).map(function (stats) {
-      return getLeads(stats, model.groupParameters);
+      return ChartUtils.getLeads(stats, model.groupParameters);
     });
     let leadsAccepted = Object.values(model.report).map(function (stats) {
-      return getLeads(stats, model.groupParameters, 'accept');
+      return ChartUtils.getLeads(stats, model.groupParameters, 'accept');
     });
     let payoutsAccepted = Object.values(model.report).map(function (stats) {
-      return getPayouts(stats, model.groupParameters, false);
+      return ChartUtils.getPayouts(stats, model.groupParameters, false);
     });
     let payoutsExpected = Object.values(model.report).map(function (stats) {
-      return getPayouts(stats, model.groupParameters, true);
+      return ChartUtils.getPayouts(stats, model.groupParameters, true);
     });
     let expenses = Object.values(model.report).map(function (stats) {
-      return getExpenses(stats);
+      return ChartUtils.getExpenses(stats);
     });
     let roiAccepted = payoutsAccepted.map(function (payout, i) {
       let expense = expenses[i];
-      return getRoi(payout, expense);
+      return ChartUtils.getRoi(payout, expense);
     });
     let roiExpected = payoutsExpected.map(function (payout, i) {
       let expense = expenses[i];
-      return getRoi(payout, expense);
+      return ChartUtils.getRoi(payout, expense);
     });
 
     const clicksChartOptions = {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(clicks, "Clicks"),
+        datasets: ChartUtils.distribution2ChartJsDataset(clicks, "Clicks"),
       },
       options: {
         responsive: true,
@@ -316,7 +176,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(leads, "Leads"),
+        datasets: ChartUtils.distribution2ChartJsDataset(leads, "Leads"),
       },
       options: {
         responsive: true,
@@ -332,7 +192,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(leadsAccepted, "Leads Accepted"),
+        datasets: ChartUtils.distribution2ChartJsDataset(leadsAccepted, "Leads Accepted"),
       },
       options: {
         responsive: true,
@@ -348,7 +208,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(payoutsAccepted, "Payouts"),
+        datasets: ChartUtils.distribution2ChartJsDataset(payoutsAccepted, "Payouts"),
       },
       options: {
         responsive: true,
@@ -364,7 +224,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(payoutsExpected, "Payouts (expected)"),
+        datasets: ChartUtils.distribution2ChartJsDataset(payoutsExpected, "Payouts (expected)"),
       },
       options: {
         responsive: true,
@@ -380,7 +240,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(expenses, "Expenses"),
+        datasets: ChartUtils.distribution2ChartJsDataset(expenses, "Expenses"),
       },
       options: {
         responsive: true,
@@ -396,7 +256,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(roiAccepted, "ROI"),
+        datasets: ChartUtils.distribution2ChartJsDataset(roiAccepted, "ROI"),
       },
       options: {
         responsive: true,
@@ -412,7 +272,7 @@ class ChartView {
       type: "line",
       data: {
         labels: dates,
-        datasets: distribution2ChartJsDataset(roiExpected, "ROI (expected)"),
+        datasets: ChartUtils.distribution2ChartJsDataset(roiExpected, "ROI (expected)"),
       },
       options: {
         responsive: true,
