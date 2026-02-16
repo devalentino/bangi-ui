@@ -340,15 +340,10 @@ class TableView {
     this.model = model;
   }
 
-  _buildTds(statisticsContainer, groupParameters, date) {
-    let tds = [];
-
-    if (typeof date !== "undefined") {
-      tds.push(m("td", date));
-    }
-
+  _buildTrs(statisticsContainer, groupParameters, trs, existing) {
     if (groupParameters.length === 0) {
-      tds.push([
+      trs.push(m("tr", [
+        ...existing.map(function (value) {return m("td", value)}),
         m("td", statisticsContainer.clicks),
         m("td", statisticsContainer.statuses.accept.leads),
         m("td", statisticsContainer.statuses.expect.leads),
@@ -359,30 +354,22 @@ class TableView {
         m("td", 0),
         m("td", 0),
         m("td", 0),
-      ]);
+      ]));
 
-      return tds;
+      existing.pop();
+      return;
     }
 
     for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+      if (groupParameters[0] === "date") {
+        existing = [];
+      }
+
       if (stats !== null && typeof stats === "object") {
-        tds.push(m("td", distributionValue));
-        tds.push(...this._buildTds(stats, groupParameters.slice(1)));
+        existing.push(distributionValue);
+        this._buildTrs(stats, groupParameters.slice(1), trs, existing);
       }
     }
-
-    return tds;
-  }
-
-  _buildTrs(report, groupParameters) {
-    let trs = [];
-    for (const [date, stats] of Object.entries(report)) {
-      trs.push(m("tr", this._buildTds(stats, groupParameters, date)));
-    }
-
-    console.log(trs);
-
-    return trs;
   }
 
   view() {
@@ -390,9 +377,12 @@ class TableView {
     if (model.report === null) return;
 
     let groupByThs = [];
-    for (const groupParameter in model.groupParameters) {
+    for (const groupParameter of model.groupParameters) {
       groupByThs.push(m("th", {scope: "col"}, groupParameter));
     }
+
+    let trs = [];
+    this._buildTrs(model.report, ["date"].concat(model.groupParameters), trs);
 
     return m(
       "div.container-fluid.pt-4.px-4",
@@ -422,7 +412,7 @@ class TableView {
                     m("th", {scope: "col"}, "ROI Expected"),
                   ]),
                 ),
-                m("tbody", this._buildTrs(model.report, model.groupParameters)),
+                m("tbody", trs),
               ]),
             ),
           ]),
