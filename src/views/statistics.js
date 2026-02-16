@@ -24,27 +24,22 @@ function getLeads(statisticsContainer, groupParameters, status) {
 
   if (groupParameters.length === 0) {
     if (status !== null) {
-      if (Object.hasOwn(statisticsContainer.statuses, status)) {
-        return statisticsContainer.statuses[status].leads;
-      }
+      return statisticsContainer.statuses[status].leads;
+    }
 
-      return 0;
-    } else {
-      return Object.values(statisticsContainer.statuses).map(function (container) {
-        return container.leads;
-      }).reduce(function(a, leads){ return a + leads}, 0);
+    return Object.values(statisticsContainer.statuses).map(function (container) {
+      return container.leads;
+    }).reduce(function(a, leads){ return a + leads}, 0);
+  }
+
+  let distribution = {}
+  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+    if (stats !== null && typeof stats === 'object') {
+      distribution[distributionValue] = getLeads(stats, groupParameters.slice(1), status);
     }
   }
 
-  let sum = 0;
-
-  Object.values(statisticsContainer).filter(function (value) {
-    return value !== null && typeof value === 'object';
-  }).forEach(function (stats) {
-    sum += getLeads(stats, groupParameters.slice(1), status);
-  })
-
-  return sum;
+  return distribution;
 }
 
 function getPayouts(statisticsContainer, groupParameters, expected) {
@@ -66,15 +61,14 @@ function getPayouts(statisticsContainer, groupParameters, expected) {
     return payouts;
   }
 
-  let sum = 0;
+  let distribution = {}
+  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+    if (stats !== null && typeof stats === 'object') {
+      distribution[distributionValue] = getPayouts(stats, groupParameters.slice(1), expected);
+    }
+  }
 
-  Object.values(statisticsContainer).filter(function (value) {
-    return value !== null && typeof value === 'object';
-  }).forEach(function (stats) {
-    sum += getPayouts(stats, groupParameters.slice(1), expected);
-  });
-
-  return sum;
+  return distribution;
 }
 
 function getExpenses(statisticsContainer) {
@@ -82,15 +76,14 @@ function getExpenses(statisticsContainer) {
     return statisticsContainer.expenses;
   }
 
-  let sum = 0;
+  let distribution = {}
+  for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+    if (stats !== null && typeof stats === 'object') {
+      distribution[distributionValue] = getExpenses(stats);
+    }
+  }
 
-  Object.values(statisticsContainer).filter(function (value) {
-    return value !== null && typeof value === 'object';
-  }).forEach(function (stats) {
-    sum += getExpenses(stats);
-  });
-
-  return sum;
+  return distribution;
 }
 
 function distribution2ChartJsDataset(distribution, defaultLabel) {
