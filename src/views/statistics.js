@@ -340,103 +340,48 @@ class TableView {
     this.model = model;
   }
 
-  _buildTrs(report, groupByKey) {
+  _buildTds(statisticsContainer, groupParameters, date) {
+    let tds = [];
+
+    if (typeof date !== "undefined") {
+      tds.push(m("td", date));
+    }
+
+    if (groupParameters.length === 0) {
+      tds.push([
+        m("td", statisticsContainer.clicks),
+        m("td", statisticsContainer.statuses.accept.leads),
+        m("td", statisticsContainer.statuses.expect.leads),
+        m("td", statisticsContainer.statuses.reject.leads),
+        m("td", statisticsContainer.statuses.trash.leads),
+        m("td", statisticsContainer.statuses.accept.payouts),
+        m("td", statisticsContainer.statuses.accept.payouts + statisticsContainer.statuses.accept.payouts),
+        m("td", 0),
+        m("td", 0),
+        m("td", 0),
+      ]);
+
+      return tds;
+    }
+
+    for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+      if (stats !== null && typeof stats === "object") {
+        tds.push(m("td", distributionValue));
+        tds.push(...this._buildTds(stats, groupParameters.slice(1)));
+      }
+    }
+
+    return tds;
+  }
+
+  _buildTrs(report, groupParameters) {
     let trs = [];
-    report.forEach(function (row) {
-      let statuses = row.statuses || {};
-      let dateLevel = row.dateLevel || {};
-      let expenses =
-        groupByKey !== null
-          ? dateLevel.expenses
-          : row.expenses;
-      let expensesLabel =
-        expenses === null || expenses === undefined
-          ? "—"
-          : (function () {
-              let value = Number(expenses);
-              return Number.isFinite(value) ? value.toFixed(2) : "—";
-            })();
-      let roiAccepted =
-        groupByKey !== null
-          ? dateLevel.roi_accepted
-          : row.roi_accepted;
-      let roiExpected =
-        groupByKey !== null
-          ? dateLevel.roi_expected
-          : row.roi_expected;
+    for (const [date, stats] of Object.entries(report)) {
+      trs.push(m("tr", this._buildTds(stats, groupParameters, date)));
+    }
 
-      if (roiAccepted === null || roiAccepted === undefined) {
-        if (groupByKey !== null) {
-          roiAccepted = computeRoi(
-            getStatusPayouts(dateLevel.statuses || {}, "accept"),
-            expenses
-          );
-        } else {
-          roiAccepted = computeRoi(getStatusPayouts(statuses, "accept"), expenses);
-        }
-      }
-      if (roiExpected === null || roiExpected === undefined) {
-        if (groupByKey !== null) {
-          roiExpected = computeRoi(
-            getStatusPayouts(dateLevel.statuses || {}, "accept") +
-              getStatusPayouts(dateLevel.statuses || {}, "expect"),
-            expenses
-          );
-        } else {
-          roiExpected = computeRoi(
-            getStatusPayouts(statuses, "accept") + getStatusPayouts(statuses, "expect"),
-            expenses
-          );
-        }
-      }
+    console.log(trs);
 
-      trs.push(
-        m("tr", [
-          ...(groupByKey === null || row.isDateHead
-            ? [m("td", groupByKey !== null ? { rowspan: row.rowspan } : {}, row.date)]
-            : []),
-          ...(groupByKey !== null ? [m("td", row[groupByKey])] : []),
-          m("td", row.clicks),
-          m("td", getStatusLeads(statuses, "accept")),
-          m("td", getStatusLeads(statuses, "expect")),
-          m("td", getStatusLeads(statuses, "reject")),
-          m("td", getStatusLeads(statuses, "trash")),
-          m("td", getStatusPayouts(statuses, "accept")),
-          m("td", getStatusPayouts(statuses, "expect")),
-          ...(groupByKey === null || row.isDateHead
-            ? [m("td", groupByKey !== null ? { rowspan: row.rowspan } : {}, expensesLabel)]
-            : []),
-          ...(groupByKey === null || row.isDateHead
-            ? [
-                m(
-                  "td",
-                  groupByKey !== null ? { rowspan: row.rowspan } : {},
-                  roiAccepted === null || roiAccepted === undefined
-                    ? "—"
-                    : (function () {
-                        let value = Number(roiAccepted);
-                        return Number.isFinite(value) ? value.toFixed(2) : "—";
-                      })()
-                ),
-              ]
-            : []),
-          ...(groupByKey === null || row.isDateHead
-            ? [
-                m(
-                  "td",
-                  groupByKey !== null ? { rowspan: row.rowspan } : {},
-                  roiExpected === null || roiExpected === undefined
-                    ? "—"
-                    : (function () {
-                        let value = Number(roiExpected);
-                        return Number.isFinite(value) ? value.toFixed(2) : "—";
-                      })()
-                ),
-              ]
-            : []),
-        ]),
-      );
-    });
     return trs;
   }
 
@@ -444,58 +389,9 @@ class TableView {
     let model = this.model;
     if (model.report === null) return;
 
-    let groupByKey =
-      model.groupParameters && model.groupParameters.length > 0
-        ? model.groupParameters[0]
-        : model.filter.groupBy;
-    let rows = extractRows(model.report, model.groupParameters);
-
-    rows.sort(function (a, b) {
-      if (a.date === b.date) {
-        return String(a.groupValue || "").localeCompare(String(b.groupValue || ""));
-      }
-      return String(a.date).localeCompare(String(b.date));
-    });
-
-    let grouped = rows.map(function (row) {
-      let groupValueLabel = row.groupValue === null ? "Total" : row.groupValue;
-      let dateLevelMetrics = aggregateNode(model.report[row.date] || {});
-      return {
-        date: row.date,
-        clicks: row.metrics.clicks,
-        statuses: row.metrics.statuses || {},
-        expenses: row.metrics.expenses,
-        roi_accepted: row.metrics.roi_accepted,
-        roi_expected: row.metrics.roi_expected,
-        dateLevel: {
-          statuses: dateLevelMetrics.statuses || {},
-          expenses: dateLevelMetrics.expenses,
-          roi_accepted: dateLevelMetrics.roi_accepted,
-          roi_expected: dateLevelMetrics.roi_expected,
-        },
-        ...(groupByKey !== null
-          ? { [groupByKey]: groupValueLabel }
-          : {}),
-      };
-    });
-
-    if (groupByKey !== null) {
-      let rowsPerDate = {};
-      grouped.forEach(function (row) {
-        rowsPerDate[row.date] = (rowsPerDate[row.date] || 0) + 1;
-      });
-
-      let seenDates = {};
-      grouped = grouped.map(function (row) {
-        let isDateHead = !seenDates[row.date];
-        if (isDateHead) {
-          seenDates[row.date] = true;
-        }
-        return Object.assign({}, row, {
-          isDateHead: isDateHead,
-          rowspan: rowsPerDate[row.date],
-        });
-      });
+    let groupByThs = [];
+    for (const groupParameter in model.groupParameters) {
+      groupByThs.push(m("th", {scope: "col"}, groupParameter));
     }
 
     return m(
@@ -513,7 +409,7 @@ class TableView {
                   "thead",
                   m("tr", [
                     m("th", {scope: "col"}, "Date"),
-                    ...(groupByKey !== null ? [m("th", {scope: "col"}, groupByKey)] : []),
+                    ...groupByThs,
                     m("th", {scope: "col"}, "Clicks"),
                     m("th", {scope: "col"}, "Accept"),
                     m("th", {scope: "col"}, "Expect"),
@@ -526,7 +422,7 @@ class TableView {
                     m("th", {scope: "col"}, "ROI Expected"),
                   ]),
                 ),
-                m("tbody", this._buildTrs(grouped, groupByKey)),
+                m("tbody", this._buildTrs(model.report, model.groupParameters)),
               ]),
             ),
           ]),
@@ -548,7 +444,7 @@ class StatisticsView {
     return [
       m(this.filterView),
       m(this.chartView),
-      // m(this.tableView),
+      m(this.tableView),
     ];
   }
 }
