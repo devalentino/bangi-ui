@@ -86,6 +86,28 @@ function getExpenses(statisticsContainer) {
   return distribution;
 }
 
+function getRoi(payout, expense) {
+  if (typeof payout === "object" && typeof expense === "object") {
+    let distribution = {};
+
+    for (const [distributionValue, stats] of Object.entries(payout)) {
+      distribution[distributionValue] = getRoi(stats, expense[distributionValue]);
+    }
+
+    return distribution;
+  }
+
+  if (typeof payout === "object" && typeof expense === "number") {
+    payout = Object.values(payout).reduce(function(a, payout){ return a + payout}, 0);
+  }
+
+  if (expense === 0) {
+    return 0;
+  }
+
+  return (payout - expense) / expense * 100;
+}
+
 function distribution2ChartJsDataset(distribution, defaultLabel) {
   if (distribution.every(function(el) {return typeof el === "number"})) {
     return [{
@@ -267,11 +289,11 @@ class ChartView {
     });
     let roiAccepted = payoutsAccepted.map(function (payout, i) {
       let expense = expenses[i];
-      return (payout - expense) / expense * 100;
+      return getRoi(payout, expense);
     });
     let roiExpected = payoutsExpected.map(function (payout, i) {
       let expense = expenses[i];
-      return (payout - expense) / expense * 100;
+      return getRoi(payout, expense);
     });
 
     const clicksChartOptions = {
