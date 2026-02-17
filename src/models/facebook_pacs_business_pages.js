@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsBusinessPagesModel {
   constructor() {
@@ -15,7 +16,7 @@ class FacebookPacsBusinessPagesModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-pages`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-pages`,
       params: {
         page: m.route.param("page") || 1,
         pageSize: m.route.param("pageSize") || 10,

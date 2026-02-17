@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class CoreCampaignModel {
   constructor(campaignId) {
@@ -45,7 +46,7 @@ class CoreCampaignModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}`,
+      url: `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -150,8 +151,8 @@ class CoreCampaignModel {
     let isNew = this.campaignId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns`
-      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}`;
+      ? `${config.backendApiBaseUrl}/core/campaigns`
+      : `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}`;
 
     api.request({
       method: method,

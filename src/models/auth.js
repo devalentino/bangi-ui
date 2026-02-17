@@ -1,8 +1,14 @@
 var m = require("mithril");
+var config = require("../config");
 
 var STORAGE_KEY = "bangi.auth";
+var PERSISTENT_AUTH = process.env.DEBUG_PERSIST_AUTH === "true";
 
 function loadStoredCredentials() {
+  if (!PERSISTENT_AUTH) {
+    return null;
+  }
+
   if (typeof localStorage === "undefined") {
     return null;
   }
@@ -25,6 +31,10 @@ function loadStoredCredentials() {
 }
 
 function persistCredentials(username, password) {
+  if (!PERSISTENT_AUTH) {
+    return;
+  }
+
   if (typeof localStorage === "undefined") {
     return;
   }
@@ -36,6 +46,10 @@ function persistCredentials(username, password) {
 }
 
 function clearCredentials() {
+  if (!PERSISTENT_AUTH) {
+    return;
+  }
+
   if (typeof localStorage === "undefined") {
     return;
   }
@@ -59,6 +73,10 @@ class AuthModel {
       );
       this.isAuthenticated = true;
     }
+
+    if (!PERSISTENT_AUTH && typeof localStorage !== "undefined") {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }
 
   signIn(username, password) {
@@ -71,7 +89,7 @@ class AuthModel {
 
     m.request({
       method: "POST",
-      url: process.env.BACKEND_API_BASE_URL + "/auth/authenticate",
+      url: config.backendApiBaseUrl + "/auth/authenticate",
       headers: { Authorization: "Basic " + this.token },
     })
       .then(function () {

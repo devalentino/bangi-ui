@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsAdCabinetModel {
   constructor(adCabinetId) {
@@ -37,7 +38,7 @@ class FacebookPacsAdCabinetModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets/${this.adCabinetId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/ad-cabinets/${this.adCabinetId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -79,8 +80,8 @@ class FacebookPacsAdCabinetModel {
     let isNew = this.adCabinetId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets`
-      : `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets/${this.adCabinetId}`;
+      ? `${config.backendApiBaseUrl}/facebook/pacs/ad-cabinets`
+      : `${config.backendApiBaseUrl}/facebook/pacs/ad-cabinets/${this.adCabinetId}`;
 
     api.request({
       method: method,
@@ -111,7 +112,7 @@ class FacebookPacsAdCabinetModel {
 
     return api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios`,
       params: {
         page: 1,
         pageSize: 20,
@@ -133,14 +134,14 @@ class FacebookPacsAdCabinetModel {
   bindBusinessPortfolio(businessPortfolioId) {
     return api.request({
       method: "POST",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets/${this.adCabinetId}/business-portfolio/${businessPortfolioId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/ad-cabinets/${this.adCabinetId}/business-portfolio/${businessPortfolioId}`,
     });
   }
 
   unbindBusinessPortfolio(businessPortfolioId) {
     return api.request({
       method: "DELETE",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets/${this.adCabinetId}/business-portfolio/${businessPortfolioId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/ad-cabinets/${this.adCabinetId}/business-portfolio/${businessPortfolioId}`,
     });
   }
 }

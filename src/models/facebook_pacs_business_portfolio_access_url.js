@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsBusinessPortfolioAccessUrlModel {
   constructor(businessPortfolioId) {
@@ -51,7 +52,7 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
 
     api.request({
       method: "POST",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls`,
       body: payload,
     })
       .then(function () {

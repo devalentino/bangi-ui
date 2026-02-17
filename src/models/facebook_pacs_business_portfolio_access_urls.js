@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsBusinessPortfolioAccessUrlsModel {
   constructor(businessPortfolioId) {
@@ -16,7 +17,7 @@ class FacebookPacsBusinessPortfolioAccessUrlsModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls`,
       params: {
         page: m.route.param("page") || 1,
         pageSize: m.route.param("pageSize") || 10,
@@ -38,7 +39,7 @@ class FacebookPacsBusinessPortfolioAccessUrlsModel {
   deleteAccessUrl(accessUrlId) {
     return api.request({
       method: "DELETE",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls/${accessUrlId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls/${accessUrlId}`,
     });
   }
 }
