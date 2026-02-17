@@ -1,0 +1,11 @@
+.idea
+node_modules
+dashmin*
+bin
+css
+img
+lib
+
+.env
+.env.local
+AGENTS.md
