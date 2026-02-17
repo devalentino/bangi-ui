@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsBusinessPortfolioModel {
   constructor(businessPortfolioId) {
@@ -39,7 +40,7 @@ class FacebookPacsBusinessPortfolioModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -81,8 +82,8 @@ class FacebookPacsBusinessPortfolioModel {
     let isNew = this.businessPortfolioId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios`
-      : `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}`;
+      ? `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios`
+      : `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}`;
 
     api.request({
       method: method,
@@ -107,14 +108,14 @@ class FacebookPacsBusinessPortfolioModel {
   addExecutor(executorId) {
     return api.request({
       method: "POST",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/executors/${executorId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/executors/${executorId}`,
     });
   }
 
   removeExecutor(executorId) {
     return api.request({
       method: "DELETE",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/executors/${executorId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-portfolios/${this.businessPortfolioId}/executors/${executorId}`,
     });
   }
 
@@ -128,7 +129,7 @@ class FacebookPacsBusinessPortfolioModel {
 
     return api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/executors`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/executors`,
       params: {
         page: 1,
         pageSize: 20,

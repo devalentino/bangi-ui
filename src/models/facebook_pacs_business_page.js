@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsBusinessPageModel {
   constructor(businessPageId) {
@@ -35,7 +36,7 @@ class FacebookPacsBusinessPageModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-pages/${this.businessPageId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/business-pages/${this.businessPageId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -77,8 +78,8 @@ class FacebookPacsBusinessPageModel {
     let isNew = this.businessPageId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-pages`
-      : `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-pages/${this.businessPageId}`;
+      ? `${config.backendApiBaseUrl}/facebook/pacs/business-pages`
+      : `${config.backendApiBaseUrl}/facebook/pacs/business-pages/${this.businessPageId}`;
 
     api.request({
       method: method,

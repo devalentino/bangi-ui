@@ -1,4 +1,5 @@
 const api = require("./api");
+var config = require("../config");
 
 class ExpensesReportFilter {
   constructor() {
@@ -55,7 +56,7 @@ class ExpensesReportModel {
     return api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/reports/expenses`,
+        url: `${config.backendApiBaseUrl}/reports/expenses`,
         params: {
           periodStart: this.filter.periodStart,
           periodEnd: this.filter.periodEnd,
@@ -81,7 +82,7 @@ class ExpensesReportModel {
     return api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
+        url: `${config.backendApiBaseUrl}/core/campaigns`,
       })
       .then(function (payload) {
         this.campaigns = payload.content;
@@ -102,7 +103,7 @@ class ExpensesReportModel {
     return api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/reports/helpers/expenses-distribution-parameters`,
+        url: `${config.backendApiBaseUrl}/reports/helpers/expenses-distribution-parameters`,
         params: {
           campaignId: campaignId,
         },
@@ -126,7 +127,7 @@ class ExpensesReportModel {
     return api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/reports/helpers/expenses-distribution-parameter-values`,
+        url: `${config.backendApiBaseUrl}/reports/helpers/expenses-distribution-parameter-values`,
         params: {
           campaignId: campaignId,
           parameter: parameter,
@@ -154,7 +155,7 @@ class ExpensesReportModel {
     return api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}`,
+        url: `${config.backendApiBaseUrl}/core/campaigns/${campaignId}`,
       })
       .then(function (payload) {
         this.distributionParameter = payload.expensesDistributionParameter;
@@ -174,7 +175,7 @@ class ExpensesReportModel {
     return api
       .request({
         method: "POST",
-        url: `${process.env.BACKEND_API_BASE_URL}/reports/expenses`,
+        url: `${config.backendApiBaseUrl}/reports/expenses`,
         body: payload,
       })
       .then(function () {

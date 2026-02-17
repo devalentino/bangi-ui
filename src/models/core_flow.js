@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class CoreFlowModel {
   constructor(flowId, campaignId) {
@@ -47,7 +48,7 @@ class CoreFlowModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${this.flowId}`,
+      url: `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}/flows/${this.flowId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -130,8 +131,8 @@ class CoreFlowModel {
     let isNew = this.flowId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows`
-      : `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${this.flowId}`;
+      ? `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}/flows`
+      : `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}/flows/${this.flowId}`;
 
     api.request(
       {

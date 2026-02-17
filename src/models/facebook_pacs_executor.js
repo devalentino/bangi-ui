@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsExecutorModel {
   constructor(executorId) {
@@ -35,7 +36,7 @@ class FacebookPacsExecutorModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/executors/${this.executorId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/executors/${this.executorId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -77,8 +78,8 @@ class FacebookPacsExecutorModel {
     let isNew = this.executorId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/executors`
-      : `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/executors/${this.executorId}`;
+      ? `${config.backendApiBaseUrl}/facebook/pacs/executors`
+      : `${config.backendApiBaseUrl}/facebook/pacs/executors/${this.executorId}`;
 
     api.request({
       method: method,

@@ -1,6 +1,7 @@
 let m = require("mithril");
 let api = require("../models/api");
 let FacebookPacsCampaignModel = require("../models/facebook_pacs_campaign");
+var config = require("../config");
 
 class FacebookPacsCampaignView {
   constructor() {
@@ -28,17 +29,17 @@ class FacebookPacsCampaignView {
     Promise.all([
       api.request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/executors`,
+        url: `${config.backendApiBaseUrl}/facebook/pacs/executors`,
         params: { page: 1, pageSize: 1000, sortBy: "id", sortOrder: "asc" },
       }),
       api.request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/ad-cabinets`,
+        url: `${config.backendApiBaseUrl}/facebook/pacs/ad-cabinets`,
         params: { page: 1, pageSize: 1000, sortBy: "id", sortOrder: "asc" },
       }),
       api.request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/business-pages`,
+        url: `${config.backendApiBaseUrl}/facebook/pacs/business-pages`,
         params: { page: 1, pageSize: 1000, sortBy: "id", sortOrder: "asc" },
       }),
     ])

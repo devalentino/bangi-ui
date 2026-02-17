@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class FacebookPacsCampaignModel {
   constructor(campaignId) {
@@ -49,7 +50,7 @@ class FacebookPacsCampaignModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/campaigns/${this.campaignId}`,
+      url: `${config.backendApiBaseUrl}/facebook/pacs/campaigns/${this.campaignId}`,
     })
       .then(function (payload) {
         this.lastLoaded = payload;
@@ -141,8 +142,8 @@ class FacebookPacsCampaignModel {
     let isNew = this.campaignId === "new";
     let method = isNew ? "POST" : "PATCH";
     let url = isNew
-      ? `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/campaigns`
-      : `${process.env.BACKEND_API_BASE_URL}/facebook/pacs/campaigns/${this.campaignId}`;
+      ? `${config.backendApiBaseUrl}/facebook/pacs/campaigns`
+      : `${config.backendApiBaseUrl}/facebook/pacs/campaigns/${this.campaignId}`;
 
     api.request({
       method: method,

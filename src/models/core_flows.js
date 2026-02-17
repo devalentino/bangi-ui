@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class CoreFlowsModel {
   constructor(campaignId) {
@@ -18,7 +19,7 @@ class CoreFlowsModel {
 
     return api.request({
       method: "PATCH",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${campaignId}/flows/order`,
+      url: `${config.backendApiBaseUrl}/core/campaigns/${campaignId}/flows/order`,
       body: { order: orderMapping },
     });
   }
@@ -36,7 +37,7 @@ class CoreFlowsModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows`,
+      url: `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}/flows`,
       params: requestParams,
     })
       .then(function (payload) {
@@ -53,7 +54,7 @@ class CoreFlowsModel {
   deleteFlow(flowId) {
     return api.request({
       method: "DELETE",
-      url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns/${this.campaignId}/flows/${flowId}`,
+      url: `${config.backendApiBaseUrl}/core/campaigns/${this.campaignId}/flows/${flowId}`,
     });
   }
 }

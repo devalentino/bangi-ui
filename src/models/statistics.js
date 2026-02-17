@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+var config = require("../config");
 
 class StatisticsFilter {
   constructor() {
@@ -41,7 +42,7 @@ class StatisticsModel {
     return api
       .request({
         method: "GET",
-        url: `${process.env.BACKEND_API_BASE_URL}/core/campaigns`,
+        url: `${config.backendApiBaseUrl}/core/campaigns`,
       })
       .then(function (payload) {
         this.campaigns = payload.content;
@@ -79,7 +80,7 @@ class StatisticsModel {
 
     api.request({
       method: "GET",
-      url: `${process.env.BACKEND_API_BASE_URL}/reports/statistics`,
+      url: `${config.backendApiBaseUrl}/reports/statistics`,
       params: parameters,
     }).then(function (payload) {
       this.report = payload.content.report;
