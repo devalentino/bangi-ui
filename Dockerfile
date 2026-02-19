@@ -6,6 +6,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
+ARG DEBUG_PERSIST_AUTH=false
+ENV DEBUG_PERSIST_AUTH=$DEBUG_PERSIST_AUTH
 RUN npm run build
 
 FROM nginx:1.27-alpine
