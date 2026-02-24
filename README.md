@@ -61,7 +61,7 @@ The repo includes a multi-stage Docker build:
 ### Build Image
 
 ```bash
-docker build -t ghcr.io/devalentino/bangi-ui:$(git describe --tags --exact-match) .
+docker build -f infra/Dockerfile -t ghcr.io/devalentino/bangi-ui:$(git describe --tags --exact-match) .
 ```
 
 ### Deploy Image
