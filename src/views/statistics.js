@@ -386,7 +386,7 @@ class TableView {
         m("td", statisticsContainer.statuses.reject.leads),
         m("td", statisticsContainer.statuses.trash.leads),
         m("td", statisticsContainer.statuses.accept.payouts),
-        m("td", statisticsContainer.statuses.accept.payouts + statisticsContainer.statuses.accept.payouts),
+        m("td", statisticsContainer.statuses.accept.payouts + statisticsContainer.statuses.expect.payouts),
       ];
 
       if (Object.hasOwn(statisticsContainer, "expenses")) {
