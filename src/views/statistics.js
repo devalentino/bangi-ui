@@ -110,6 +110,22 @@ class FilterView {
                 ),
               ),
             ),
+            m(".form-check.mb-0", [
+              m("input.form-check-input", {
+                type: "checkbox",
+                id: "statisticsSkipClicksWithoutParameters",
+                checked: this.model.filter.skipClicksWithoutParameters,
+                onchange: function (event) {
+                  this.model.filter.skipClicksWithoutParameters = event.target.checked;
+                  this.model.loadStatisticsReport();
+                }.bind(this),
+              }),
+              m(
+                "label.form-check-label",
+                {for: "statisticsSkipClicksWithoutParameters"},
+                "Skip clicks without parameters",
+              ),
+            ]),
           ]),
         ),
       ]),

@@ -8,6 +8,7 @@ class StatisticsFilter {
     this.periodEnd = null;
     this.campaignId = null;
     this.groupBy = null;
+    this.skipClicksWithoutParameters = false;
   }
 
   isReady() {
@@ -72,6 +73,7 @@ class StatisticsModel {
       periodStart: this.filter.periodStartIsoDate(),
       periodEnd: this.filter.periodEndIsoDate(),
       campaignId: this.filter.campaignId,
+      skipClicksWithoutParameters: this.filter.skipClicksWithoutParameters
     };
 
     if (this.filter.groupBy) {
