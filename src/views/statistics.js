@@ -374,6 +374,15 @@ class TableView {
     return keysCount;
   }
 
+  _format2DigitsAfterComa(value) {
+    let parsed = Number(value);
+    if (Number.isNaN(parsed)) {
+      return value;
+    }
+
+    return parsed.toFixed(2);
+  }
+
   _buildTrs(statisticsContainer, groupParameters, trs, context) {
     if (groupParameters.length === 0) {
       let tds = [
@@ -391,12 +400,12 @@ class TableView {
 
       if (Object.hasOwn(statisticsContainer, "expenses")) {
         tds.push(m("td", statisticsContainer.expenses));
-        tds.push(m("td", statisticsContainer.roi_accepted));
-        tds.push(m("td", statisticsContainer.roi_expected));
+        tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.roi_accepted)));
+        tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.roi_expected)));
       } else if (context.distributionValuesCount > 0) {
         tds.push(m("td", {rowspan: context.distributionValuesCount}, context.expenses));
-        tds.push(m("td", {rowspan: context.distributionValuesCount}, context.roiAccepted));
-        tds.push(m("td", {rowspan: context.distributionValuesCount}, context.roiExpected));
+        tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.roiAccepted)));
+        tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.roiExpected)));
 
         context.distributionValuesCount = 0;
       }

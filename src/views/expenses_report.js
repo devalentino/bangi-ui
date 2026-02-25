@@ -209,11 +209,15 @@ class ExpensesReportView {
     const columnCount = table.getColumns().length;
     const data = table.getData();
 
-    return data.map(function (row) {
+    return data.map(function (row, rowIndex) {
       const values = new Array(columnCount).fill(null);
       values[0] = row.date || null;
       for (let i = 1; i < columnCount; i += 1) {
-        values[i] = normalizeMatrixValue(row[`c${i}`]);
+        if (rowIndex === 0) {
+          values[i] = row[`c${i}`];
+        } else {
+          values[i] = normalizeMatrixValue(row[`c${i}`]);
+        }
       }
       return values;
     });
