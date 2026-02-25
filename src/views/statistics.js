@@ -399,11 +399,11 @@ class TableView {
       ];
 
       if (Object.hasOwn(statisticsContainer, "expenses")) {
-        tds.push(m("td", statisticsContainer.expenses));
+        tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.expenses)));
         tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.roi_accepted)));
         tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.roi_expected)));
       } else if (context.distributionValuesCount > 0) {
-        tds.push(m("td", {rowspan: context.distributionValuesCount}, context.expenses));
+        tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.expenses)));
         tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.roiAccepted)));
         tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.roiExpected)));
 
