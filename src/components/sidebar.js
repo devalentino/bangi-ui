@@ -35,6 +35,13 @@ class Sidebar {
               ]),
               m(
                 "a.nav-item.nav-link",
+                { href: "#!/reports/leads", class: linkClass(isReportsLeadsRoute) },
+                [
+                  m("i.fa.fa-address-card.me-2"),
+                  "Leads",
+                ]),
+              m(
+                "a.nav-item.nav-link",
                 { href: "#!/core/campaigns", class: linkClass(isCoreCampaignsRoute) },
                 [
                 m("i.fa.fa-bullhorn.me-2"),
@@ -46,13 +53,6 @@ class Sidebar {
                 [
                   m("i.fa.fa-receipt.me-2"),
                   "Expenses",
-                ]),
-              m(
-                "a.nav-item.nav-link",
-                { href: "#!/reports/leads", class: linkClass(isReportsLeadsRoute) },
-                [
-                  m("i.fa.fa-address-card.me-2"),
-                  "Leads",
                 ]),
               m(".nav-item.dropdown", [
                 m(
