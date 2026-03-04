@@ -4,6 +4,8 @@ let { timestamp2LocalTime, timestamp2UtcTime } = require("../utils/date");
 let { formatCurrency } = require("../utils/currency");
 
 const FIRST_COLUMN_STYLE = "width: 220px;";
+const DETAILS_TABLE_STYLE = "table-layout: fixed; width: 100%;";
+const VALUE_COLUMN_STYLE = "overflow-wrap: anywhere; word-break: break-word;";
 
 function renderParameterValue(value) {
   if (value === null || typeof value === "undefined") {
@@ -11,7 +13,11 @@ function renderParameterValue(value) {
   }
 
   if (typeof value === "object") {
-    return m("pre.mb-0.small", JSON.stringify(value, null, 2));
+    return m(
+      "pre.mb-0.small",
+      { style: "white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word;" },
+      JSON.stringify(value, null, 2),
+    );
   }
 
   return String(value);
@@ -26,7 +32,7 @@ function renderParametersTable(parameters) {
 
   return m(
     "div.table-responsive",
-    m("table.table.table-sm.mb-0", [
+    m("table.table.table-sm.mb-0", { style: DETAILS_TABLE_STYLE }, [
       m(
         "thead",
         m("tr", [
@@ -39,7 +45,7 @@ function renderParametersTable(parameters) {
         parameterKeys.map(function (key) {
           return m("tr", [
             m("td", { style: FIRST_COLUMN_STYLE }, key),
-            m("td", renderParameterValue(parameters[key])),
+            m("td", { style: VALUE_COLUMN_STYLE }, renderParameterValue(parameters[key])),
           ]);
         }),
       ),
@@ -85,7 +91,7 @@ class ReportsLeadView {
                     m("h6.mb-4", "Click"),
                     m(
                       "div.table-responsive",
-                      m("table.table.table-sm.mb-0", [
+                      m("table.table.table-sm.mb-0", { style: DETAILS_TABLE_STYLE }, [
                         m(
                           "thead",
                           m("tr", [
@@ -96,12 +102,13 @@ class ReportsLeadView {
                         m("tbody", [
                           m("tr", [
                             m("td", { style: FIRST_COLUMN_STYLE }, "Click ID"),
-                            m("td", String(lead.clickId)),
+                            m("td", { style: VALUE_COLUMN_STYLE }, String(lead.clickId)),
                           ]),
                           m("tr", [
                             m("td", { style: FIRST_COLUMN_STYLE }, "Campaign"),
                             m(
                               "td",
+                              { style: VALUE_COLUMN_STYLE },
                               m(
                                 "a",
                                 { href: `#!/core/campaigns/${lead.campaignId}` },
@@ -111,11 +118,11 @@ class ReportsLeadView {
                           ]),
                           m("tr", [
                             m("td", { style: FIRST_COLUMN_STYLE }, "Time (Local)"),
-                            m("td", String(timestamp2LocalTime(lead.createdAt))),
+                            m("td", { style: VALUE_COLUMN_STYLE }, String(timestamp2LocalTime(lead.createdAt))),
                           ]),
                           m("tr", [
                             m("td", { style: FIRST_COLUMN_STYLE }, "Time (UTC)"),
-                            m("td", String(timestamp2UtcTime(lead.createdAt))),
+                            m("td", { style: VALUE_COLUMN_STYLE }, String(timestamp2UtcTime(lead.createdAt))),
                           ]),
                         ]),
                       ]),
@@ -147,7 +154,7 @@ class ReportsLeadView {
                           m("h6.mb-4", `Postback #${postbackNumber}`),
                           m(
                             "div.table-responsive",
-                            m("table.table.table-sm.mb-0", [
+                            m("table.table.table-sm.mb-0", { style: DETAILS_TABLE_STYLE }, [
                               m(
                                 "thead",
                                 m("tr", [
@@ -158,12 +165,13 @@ class ReportsLeadView {
                               m("tbody", [
                                 m("tr", [
                                   m("td", { style: FIRST_COLUMN_STYLE }, "Status"),
-                                  m("td", String(postback.status || "-")),
+                                  m("td", { style: VALUE_COLUMN_STYLE }, String(postback.status || "-")),
                                 ]),
                                 m("tr", [
                                   m("td", { style: FIRST_COLUMN_STYLE }, "Payout"),
                                   m(
                                     "td",
+                                    { style: VALUE_COLUMN_STYLE },
                                     String(
                                       formatCurrency(
                                         postback.costValue,
@@ -176,6 +184,7 @@ class ReportsLeadView {
                                   m("td", { style: FIRST_COLUMN_STYLE }, "Time (Local)"),
                                   m(
                                     "td",
+                                    { style: VALUE_COLUMN_STYLE },
                                     String(
                                       timestamp2LocalTime(postback.createdAt),
                                     ),
@@ -185,6 +194,7 @@ class ReportsLeadView {
                                   m("td", { style: FIRST_COLUMN_STYLE }, "Time (UTC)"),
                                   m(
                                     "td",
+                                    { style: VALUE_COLUMN_STYLE },
                                     String(timestamp2UtcTime(postback.createdAt)),
                                   ),
                                 ]),
