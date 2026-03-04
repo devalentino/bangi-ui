@@ -13,7 +13,7 @@ function renderStatus(status) {
     accept: m("i.fa.fa-check.text-success", { title: "accept" }),
     expect: m("i.fa.fa-clock.text-warning", { title: "expect" }),
     reject: m("i.fa.fa-times.text-danger", { title: "reject" }),
-    trash: m("i.fa.fa-trash", { title: "trash", style: "color: magenta;" }),
+    trash: m("i.fa.fa-trash", { title: "trash", style: "color: mediumpurple;" }),
   };
 
   return mapping[status] || status;
