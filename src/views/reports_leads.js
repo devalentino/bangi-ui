@@ -4,6 +4,21 @@ let ReportsLeadsModel = require("../models/reports_leads");
 let { timestamp2LocalTime, timestamp2UtcTime } = require("../utils/date");
 let { formatCurrency } = require("../utils/currency");
 
+function renderStatus(status) {
+  if (!status) {
+    return "-";
+  }
+
+  let mapping = {
+    accept: m("i.fa.fa-check.text-success", { title: "accept" }),
+    expect: m("i.fa.fa-clock.text-warning", { title: "expect" }),
+    reject: m("i.fa.fa-times.text-danger", { title: "reject" }),
+    trash: m("i.fa.fa-trash", { title: "trash", style: "color: magenta;" }),
+  };
+
+  return mapping[status] || status;
+}
+
 class ReportsLeadsView {
   constructor() {
     this.model = new ReportsLeadsModel();
@@ -162,7 +177,7 @@ class ReportsLeadsView {
                                     lead.clickId,
                                   ),
                                 ),
-                                m("td", lead.status || "-"),
+                                m("td", renderStatus(lead.status)),
                                 m(
                                   "td",
                                   formatCurrency(lead.costValue, lead.currency),
