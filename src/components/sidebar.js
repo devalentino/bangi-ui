@@ -6,6 +6,7 @@ class Sidebar {
     let isFacebookPacsRoute = currentRoute.indexOf("/facebook/pacs") === 0;
     let isStatisticsRoute = currentRoute === "/statistics";
     let isExpensesReportRoute = currentRoute === "/reports/expenses";
+    let isReportsLeadsRoute = currentRoute.indexOf("/reports/leads") === 0;
     let isCoreCampaignsRoute = currentRoute.indexOf("/core/campaigns") === 0;
 
     function linkClass(isActive) {
@@ -32,6 +33,13 @@ class Sidebar {
                 m("i.fa.fa-tachometer-alt.me-2"),
                 "Statistics",
               ]),
+              m(
+                "a.nav-item.nav-link",
+                { href: "#!/reports/leads", class: linkClass(isReportsLeadsRoute) },
+                [
+                  m("i.fa.fa-address-card.me-2"),
+                  "Leads",
+                ]),
               m(
                 "a.nav-item.nav-link",
                 { href: "#!/core/campaigns", class: linkClass(isCoreCampaignsRoute) },
