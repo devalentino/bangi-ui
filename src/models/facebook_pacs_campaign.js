@@ -42,7 +42,7 @@ class FacebookPacsCampaignModel {
     }
   }
 
-  fetch() {
+  loadCampaign() {
     this.error = null;
     this.successMessage = null;
     this.lastLoaded = null;
