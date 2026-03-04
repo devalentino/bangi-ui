@@ -208,6 +208,62 @@ class ReportsLeadView {
                     ]),
                   ]);
                 }),
+            lead.leads.length === 0
+              ? m(".container-fluid.pt-4.px-4", [
+                  m(".row.g-4", [
+                    m(".col-12", [
+                      m(".bg-light.rounded.h-100.p-4", [
+                        m("h6.mb-0", "Leads"),
+                        m(".text-muted.mt-3", "No leads found."),
+                      ]),
+                    ]),
+                  ]),
+                ])
+              : lead.leads.map(function (leadItem, index) {
+                  let leadNumber = lead.leads.length - index;
+
+                  return m(".container-fluid.pt-4.px-4", [
+                    m(".row.g-4", [
+                      m(".col-12", [
+                        m(".bg-light.rounded.h-100.p-4", [
+                          m("h6.mb-4", `Lead #${leadNumber}`),
+                          m(
+                            "div.table-responsive",
+                            m("table.table.table-sm.mb-0", { style: DETAILS_TABLE_STYLE }, [
+                              m(
+                                "thead",
+                                m("tr", [
+                                  m("th", { scope: "col", style: FIRST_COLUMN_STYLE }, "Attribute"),
+                                  m("th", { scope: "col" }, "Value"),
+                                ]),
+                              ),
+                              m("tbody", [
+                                m("tr", [
+                                  m("td", { style: FIRST_COLUMN_STYLE }, "Time (Local)"),
+                                  m(
+                                    "td",
+                                    { style: VALUE_COLUMN_STYLE },
+                                    String(timestamp2LocalTime(leadItem.createdAt)),
+                                  ),
+                                ]),
+                                m("tr", [
+                                  m("td", { style: FIRST_COLUMN_STYLE }, "Time (UTC)"),
+                                  m(
+                                    "td",
+                                    { style: VALUE_COLUMN_STYLE },
+                                    String(timestamp2UtcTime(leadItem.createdAt)),
+                                  ),
+                                ]),
+                              ]),
+                            ]),
+                          ),
+                          m("h6.mt-4.mb-3", "Parameters"),
+                          renderParametersTable(leadItem.parameters),
+                        ]),
+                      ]),
+                    ]),
+                  ]);
+                }),
           ];
   }
 }
