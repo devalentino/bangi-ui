@@ -60,6 +60,19 @@ The repo includes a multi-stage Docker build:
 
 ### Build Image
 
+#### Development
+
+```bash
+docker build -f infra/Dockerfile -t ghcr.io/devalentino/bangi-ui:dev-$(git rev-parse --short HEAD) .
+```
+
+### Deploy Image
+```bash
+docker push ghcr.io/devalentino/bangi-ui:dev-$(git rev-parse --short HEAD)
+```
+
+#### Release
+
 ```bash
 docker build -f infra/Dockerfile -t ghcr.io/devalentino/bangi-ui:$(git describe --tags --exact-match) .
 ```
