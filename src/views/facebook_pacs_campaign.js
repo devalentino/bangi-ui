@@ -15,18 +15,24 @@ class FacebookPacsCampaignView {
 
   oninit() {
     let campaignId = m.route.param("campaignId");
-    if (campaignId !== "new") {
-      this.model.fetch();
+    if (campaignId === "new") {
+      this.fetchOptions();
+      return;
     }
 
-    this.fetchOptions();
+    // Load options before binding existing ids to selects,
+    // otherwise the browser can keep the placeholder selected.
+    this.model.isLoading = true;
+    this.fetchOptions().then(function () {
+      this.model.loadCampaign();
+    }.bind(this));
   }
 
   fetchOptions() {
     this.optionsError = null;
     this.optionsLoading = true;
 
-    Promise.all([
+    return Promise.all([
       api.request({
         method: "GET",
         url: `${config.backendApiBaseUrl}/facebook/pacs/executors`,
