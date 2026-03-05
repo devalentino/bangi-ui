@@ -107,27 +107,38 @@ class ReportsLeadsView {
                 ".d-flex.align-items-center.justify-content-between.mb-4",
                 m("h6.mb-0", "Campaign"),
               ),
-              m(".d-flex.mb-2", [
-                m("label.form-label", { for: "leadCampaignId" }, "Campaign"),
-                this.model.isLoadingCampaigns
-                  ? m("div", "Loading campaigns...")
-                  : m(
-                      "select.form-select",
-                      {
-                        id: "leadCampaignId",
-                        value: m.route.param("campaignId") || "",
-                        onchange: this.onCampaignChange.bind(this),
-                        disabled: this.model.campaigns.length === 0,
-                      },
-                      this.model.campaigns.map(function (campaign) {
+              m(
+                ".d-flex.mb-2",
+                m(
+                  "select.form-select.mb-3",
+                  {
+                    id: "leadCampaignId",
+                    "aria-label": "Campaign",
+                    value: m.route.param("campaignId") || "",
+                    oninput: this.onCampaignChange.bind(this),
+                    disabled:
+                      this.model.isLoadingCampaigns ||
+                      this.model.campaigns.length === 0,
+                  },
+                  this.model.campaigns.length === 0
+                    ? [
+                        m(
+                          "option",
+                          { value: "" },
+                          this.model.isLoadingCampaigns
+                            ? "Loading campaigns..."
+                            : "No campaigns",
+                        ),
+                      ]
+                    : this.model.campaigns.map(function (campaign) {
                         return m(
                           "option",
                           { value: campaign.id },
                           campaign.name || `Campaign #${campaign.id}`,
                         );
                       }),
-                    ),
-              ]),
+                ),
+              ),
             ]),
           ),
         ]),
