@@ -72,7 +72,7 @@ Deploy Image
 docker push ghcr.io/devalentino/bangi-ui:dev-$(git rev-parse --short HEAD)
 ```
 
-#### Release
+### Release
 
 ```bash
 docker build -f infra/Dockerfile -t ghcr.io/devalentino/bangi-ui:$(git describe --tags --exact-match) .
