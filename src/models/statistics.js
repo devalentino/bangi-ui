@@ -36,7 +36,7 @@ class StatisticsModel {
     this.groupParameters = null;
     this.campaigns = [];
     this.campaignError = null;
-    this.activeChartTab = "clicks";
+    this.activeChartTab = "profit-accepted";
   }
 
   loadCampaigns() {

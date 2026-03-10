@@ -87,6 +87,26 @@ class ChartUtils {
     return distribution;
   }
 
+  static getProfit(statisticsContainer, groupParameters, expected) {
+    if (typeof expected === "undefined") {
+      expected = false;
+    }
+
+    if (groupParameters.length === 0) {
+      const key = expected ? "profit_expected" : "profit_accepted";
+      return statisticsContainer[key];
+    }
+
+    let distribution = {};
+    for (const [distributionValue, stats] of Object.entries(statisticsContainer)) {
+      if (stats !== null && typeof stats === "object") {
+        distribution[distributionValue] = ChartUtils.getProfit(stats, groupParameters.slice(1), expected);
+      }
+    }
+
+    return distribution;
+  }
+
   static getRoi(payout, expense) {
     if (typeof payout === "object" && typeof expense === "object") {
       let distribution = {};
