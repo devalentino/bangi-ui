@@ -338,35 +338,69 @@ class ChartView {
       },
     };
 
+    const buildTabLabel = function (title, subtitle) {
+      return [m("span", title), m("br"), m("span", subtitle || "\u00A0")];
+    };
+
     let tabs = [
-      {id: "clicks", title: "Clicks", options: clicksChartOptions},
-      {id: "leads", title: "Leads", options: leadsChartOptions},
+      {
+        id: "clicks",
+        title: "Clicks",
+        tabLabel: buildTabLabel("Clicks"),
+        options: clicksChartOptions
+      },
+      {
+        id: "leads",
+        title: "Leads",
+        tabLabel: buildTabLabel("Leads"),
+        options: leadsChartOptions
+      },
       {
         id: "accepted-leads",
         title: "Leads (accepted)",
-        tabLabel: [m("span", "Leads"), m("br"), m("span", "(accepted)")],
+        tabLabel: buildTabLabel("Leads", "(accepted)"),
         options: leadsAcceptedChartOptions,
       },
-      {id: "accepted-payouts", title: "Payouts", options: payoutsAcceptedChartOptions},
+      {
+        id: "accepted-payouts",
+        title: "Payouts",
+        tabLabel: buildTabLabel("Payouts", "(accepted)"),
+        options: payoutsAcceptedChartOptions
+      },
       {
         id: "expected-payouts",
         title: "Payouts (expected)",
-        tabLabel: [m("span", "Payouts"), m("br"), m("span", "(expected)")],
+        tabLabel: buildTabLabel("Payouts", "(expected)"),
         options: payoutsExpectedChartOptions,
       },
-      {id: "expenses", title: "Expenses", options: expensesChartOptions},
-      {id: "profit-accepted", title: "Profit", options: profitAcceptedChartOptions},
+      {
+        id: "expenses",
+        title: "Expenses",
+        tabLabel: buildTabLabel("Expenses"),
+        options: expensesChartOptions
+      },
+      {
+        id: "profit-accepted",
+        title: "Profit",
+        tabLabel: buildTabLabel("Profit", "(accepted)"),
+        options: profitAcceptedChartOptions
+      },
       {
         id: "profit-expected",
         title: "Profit (expected)",
-        tabLabel: [m("span", "Profit"), m("br"), m("span", "(expected)")],
+        tabLabel: buildTabLabel("Profit", "(expected)"),
         options: profitExpectedChartOptions,
       },
-      {id: "roi-accepted", title: "ROI", options: roiAcceptedChartOptions},
+      {
+        id: "roi-accepted",
+        title: "ROI",
+        tabLabel: buildTabLabel("ROI", "(accepted)"),
+        options: roiAcceptedChartOptions
+      },
       {
         id: "roi-expected",
         title: "ROI (expected)",
-        tabLabel: [m("span", "ROI"), m("br"), m("span", "(expected)")],
+        tabLabel: buildTabLabel("ROI", "(expected)"),
         options: roiExpectedChartOptions,
       },
     ];
