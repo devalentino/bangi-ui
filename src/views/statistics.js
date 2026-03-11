@@ -163,6 +163,12 @@ class ChartView {
     let expenses = Object.values(model.report).map(function (stats) {
       return ChartUtils.getExpenses(stats);
     });
+    let profitAccepted = Object.values(model.report).map(function (stats) {
+      return ChartUtils.getProfit(stats, model.groupParameters, false);
+    });
+    let profitExpected = Object.values(model.report).map(function (stats) {
+      return ChartUtils.getProfit(stats, model.groupParameters, true);
+    });
     let roiAccepted = payoutsAccepted.map(function (payout, i) {
       let expense = expenses[i];
       return ChartUtils.getRoi(payout, expense);
@@ -284,6 +290,38 @@ class ChartView {
       },
     };
 
+    const profitAcceptedChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: ChartUtils.distribution2ChartJsDataset(profitAccepted, "Profit"),
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+
+    const profitExpectedChartOptions = {
+      type: "line",
+      data: {
+        labels: dates,
+        datasets: ChartUtils.distribution2ChartJsDataset(profitExpected, "Profit (expected)"),
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          colors: {
+            enabled: true,
+          },
+        },
+      },
+    };
+
     const roiExpectedChartOptions = {
       type: "line",
       data: {
@@ -300,18 +338,78 @@ class ChartView {
       },
     };
 
+    const buildTabLabel = function (title, subtitle) {
+      if (subtitle) {
+        return [m("span", title), m("br"), m("span", subtitle)];
+      } else {
+        return [m("span", "\u00A0"), m("br"), m("span", title)];
+      }
+    };
+
     let tabs = [
-      {id: "clicks", title: "Clicks", options: clicksChartOptions},
-      {id: "leads", title: "Leads", options: leadsChartOptions},
-      {id: "accepted-leads", title: "Leads (accepted)", options: leadsAcceptedChartOptions},
-      {id: "accepted-payouts", title: "Payouts", options: payoutsAcceptedChartOptions},
-      {id: "expected-payouts", title: "Payouts (expected)", options: payoutsExpectedChartOptions},
-      {id: "expenses", title: "Expenses", options: expensesChartOptions},
-      {id: "roi-accepted", title: "ROI", options: roiAcceptedChartOptions},
-      {id: "roi-expected", title: "ROI (expected)", options: roiExpectedChartOptions},
+      {
+        id: "clicks",
+        title: "Clicks",
+        tabLabel: buildTabLabel("Clicks"),
+        options: clicksChartOptions
+      },
+      {
+        id: "leads",
+        title: "Leads",
+        tabLabel: buildTabLabel("Leads"),
+        options: leadsChartOptions
+      },
+      {
+        id: "accepted-leads",
+        title: "Leads (accepted)",
+        tabLabel: buildTabLabel("Leads", "(accepted)"),
+        options: leadsAcceptedChartOptions,
+      },
+      {
+        id: "accepted-payouts",
+        title: "Payouts",
+        tabLabel: buildTabLabel("Payouts", "(accepted)"),
+        options: payoutsAcceptedChartOptions
+      },
+      {
+        id: "expected-payouts",
+        title: "Payouts (expected)",
+        tabLabel: buildTabLabel("Payouts", "(expected)"),
+        options: payoutsExpectedChartOptions,
+      },
+      {
+        id: "expenses",
+        title: "Expenses",
+        tabLabel: buildTabLabel("Expenses"),
+        options: expensesChartOptions
+      },
+      {
+        id: "profit-accepted",
+        title: "Profit",
+        tabLabel: buildTabLabel("Profit", "(accepted)"),
+        options: profitAcceptedChartOptions
+      },
+      {
+        id: "profit-expected",
+        title: "Profit (expected)",
+        tabLabel: buildTabLabel("Profit", "(expected)"),
+        options: profitExpectedChartOptions,
+      },
+      {
+        id: "roi-accepted",
+        title: "ROI",
+        tabLabel: buildTabLabel("ROI", "(accepted)"),
+        options: roiAcceptedChartOptions
+      },
+      {
+        id: "roi-expected",
+        title: "ROI (expected)",
+        tabLabel: buildTabLabel("ROI", "(expected)"),
+        options: roiExpectedChartOptions,
+      },
     ];
 
-    let activeTab = model.activeChartTab || tabs[0].id;
+    let activeTab = model.activeChartTab || "profit-accepted";
     let active = tabs.find(function (tab) {
       return tab.id === activeTab;
     }) || tabs[0];
@@ -321,7 +419,7 @@ class ChartView {
       m("div.row.g-4",
         m("div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
-            m("ul.nav.nav-tabs.mb-3", {role: "tablist"},
+            m("ul.nav.nav-tabs.statistics-chart-tabs.mb-3", {role: "tablist"},
               tabs.map(function (tab) {
                 let isActive = tab.id === active.id;
                 return m("li.nav-item", {role: "presentation"},
@@ -335,7 +433,7 @@ class ChartView {
                         model.activeChartTab = tab.id;
                       },
                     },
-                    tab.title
+                    tab.tabLabel || tab.title
                   )
                 );
               })
@@ -400,10 +498,14 @@ class TableView {
 
       if (Object.hasOwn(statisticsContainer, "expenses")) {
         tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.expenses)));
+        tds.push(m("td", m("b", this._format2DigitsAfterComa(statisticsContainer.profit_accepted))));
+        tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.profit_expected)));
         tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.roi_accepted)));
         tds.push(m("td", this._format2DigitsAfterComa(statisticsContainer.roi_expected)));
       } else if (context.distributionValuesCount > 0) {
         tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.expenses)));
+        tds.push(m("td", {rowspan: context.distributionValuesCount}, m("b", this._format2DigitsAfterComa(context.profitAccepted))));
+        tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.profitExpected)));
         tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.roiAccepted)));
         tds.push(m("td", {rowspan: context.distributionValuesCount}, this._format2DigitsAfterComa(context.roiExpected)));
 
@@ -420,6 +522,8 @@ class TableView {
       if (distributionValue === "expenses") {
         context.distributionValuesCount = this._distributionValuesCount(statisticsContainer);
         context.expenses = statisticsContainer.expenses;
+        context.profitAccepted = statisticsContainer.profit_accepted;
+        context.profitExpected = statisticsContainer.profit_expected;
         context.roiAccepted = statisticsContainer.roi_accepted;
         context.roiExpected = statisticsContainer.roi_expected;
         break;
@@ -439,6 +543,28 @@ class TableView {
     }
   }
 
+  _buildTotal(total, groupCount) {
+    let tds = [];
+    for (let i = 0; i <= groupCount; i++) {
+      tds.push(m("td", i === 0 ? m("b", "Total") : ""));
+    }
+
+    tds.push(m("td", total.clicks));
+    tds.push(m("td", total.statuses.accept.leads));
+    tds.push(m("td", total.statuses.expect.leads));
+    tds.push(m("td", total.statuses.reject.leads));
+    tds.push(m("td", total.statuses.trash.leads));
+    tds.push(m("td", total.statuses.accept.payouts));
+    tds.push(m("td", total.statuses.accept.payouts + total.statuses.expect.payouts));
+    tds.push(m("td", total.expenses));
+    tds.push(m("td", m("b", total.profit_accepted)));
+    tds.push(m("td", total.profit_expected));
+    tds.push(m("td", total.roi_accepted));
+    tds.push(m("td", total.roi_expected));
+
+    return m("tr.statistics-total-row", tds);
+  }
+
   view() {
     let model = this.model;
     if (model.report === null) return;
@@ -449,8 +575,18 @@ class TableView {
     }
 
     let trs = [];
-    let context = {existing: [], distributionValuesCount: 0, expenses: 0, roiAccepted: 0, roiExpected: 0};
+    let context = {
+      existing: [],
+      distributionValuesCount: 0,
+      expenses: 0,
+      profitAccepted: 0,
+      profitExpected: 0,
+      roiAccepted: 0,
+      roiExpected: 0,
+    };
     this._buildTrs(model.report, ["date"].concat(model.groupParameters), trs, context);
+    let totalTr = this._buildTotal(model.total, model.groupParameters ? model.groupParameters.length : 0);
+    trs.push(totalTr);
 
     return m(
       "div.container-fluid.pt-4.px-4",
@@ -462,7 +598,7 @@ class TableView {
             m("h6.mb-4", "Statistics"),
             m(
               "div.table-responsive",
-              m("table.table", [
+              m("table.table.statistics-table", [
                 m(
                   "thead",
                   m("tr", [
@@ -476,8 +612,10 @@ class TableView {
                     m("th", {scope: "col"}, "Payout Accept"),
                     m("th", {scope: "col"}, "Payout Expect"),
                     m("th", {scope: "col"}, "Expenses"),
-                    m("th", {scope: "col"}, "ROI Accepted"),
-                    m("th", {scope: "col"}, "ROI Expected"),
+                    m("th", {scope: "col"}, "Profit Accept"),
+                    m("th", {scope: "col"}, "Profit Expect"),
+                    m("th", {scope: "col"}, "ROI Accept"),
+                    m("th", {scope: "col"}, "ROI Expect"),
                   ]),
                 ),
                 m("tbody", trs),
