@@ -339,7 +339,11 @@ class ChartView {
     };
 
     const buildTabLabel = function (title, subtitle) {
-      return [m("span", title), m("br"), m("span", subtitle || "\u00A0")];
+      if (subtitle) {
+        return [m("span", title), m("br"), m("span", subtitle)];
+      } else {
+        return [m("span", "\u00A0"), m("br"), m("span", title)];
+      }
     };
 
     let tabs = [
