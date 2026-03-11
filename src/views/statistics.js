@@ -517,14 +517,14 @@ class TableView {
     tds.push(m("td", total.statuses.reject.leads));
     tds.push(m("td", total.statuses.trash.leads));
     tds.push(m("td", total.statuses.accept.payouts));
-    tds.push(m("td", total.statuses.expect.payouts));
+    tds.push(m("td", total.statuses.accept.payouts + total.statuses.expect.payouts));
     tds.push(m("td", total.expenses));
     tds.push(m("td", m("b", total.profit_accepted)));
     tds.push(m("td", total.profit_expected));
     tds.push(m("td", total.roi_accepted));
     tds.push(m("td", total.roi_expected));
 
-    return m("tr", tds);
+    return m("tr.table-primary.fw-bold", tds);
   }
 
   view() {
