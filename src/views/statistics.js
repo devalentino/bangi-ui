@@ -505,6 +505,28 @@ class TableView {
     }
   }
 
+  _buildTotal(total, groupCount) {
+    let tds = [];
+    for (let i = 0; i <= groupCount; i++) {
+      tds.push(m("td", i === 0 ? m("b", "Total") : ""));
+    }
+
+    tds.push(m("td", total.clicks));
+    tds.push(m("td", total.statuses.accept.leads));
+    tds.push(m("td", total.statuses.expect.leads));
+    tds.push(m("td", total.statuses.reject.leads));
+    tds.push(m("td", total.statuses.trash.leads));
+    tds.push(m("td", total.statuses.accept.payouts));
+    tds.push(m("td", total.statuses.expect.payouts));
+    tds.push(m("td", total.expenses));
+    tds.push(m("td", m("b", total.profit_accepted)));
+    tds.push(m("td", total.profit_expected));
+    tds.push(m("td", total.roi_accepted));
+    tds.push(m("td", total.roi_expected));
+
+    return m("tr", tds);
+  }
+
   view() {
     let model = this.model;
     if (model.report === null) return;
@@ -525,6 +547,8 @@ class TableView {
       roiExpected: 0,
     };
     this._buildTrs(model.report, ["date"].concat(model.groupParameters), trs, context);
+    let totalTr = this._buildTotal(model.total, model.groupParameters ? model.groupParameters.length : 0);
+    trs.push(totalTr);
 
     return m(
       "div.container-fluid.pt-4.px-4",

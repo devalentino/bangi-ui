@@ -32,6 +32,7 @@ class StatisticsModel {
   constructor() {
     this.filter = new StatisticsFilter();
     this.report = null;
+    this.total = null;
     this.parameters = null;
     this.groupParameters = null;
     this.campaigns = [];
@@ -86,6 +87,7 @@ class StatisticsModel {
       params: parameters,
     }).then(function (payload) {
       this.report = payload.content.report;
+      this.total = payload.content.total;
       this.parameters = payload.content.parameters;
       this.groupParameters = payload.content.groupParameters;
       if (typeof this.groupParameters === "string") {
