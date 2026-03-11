@@ -1,4 +1,5 @@
 var m = require("mithril");
+require("./styles/app.css");
 
 var api = require("./src/models/api");
 var AuthenticatedPage = require("./src/components/authenticated_page");

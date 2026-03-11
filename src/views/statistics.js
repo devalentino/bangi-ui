@@ -415,7 +415,7 @@ class ChartView {
       m("div.row.g-4",
         m("div.col-12",
           m("div.bg-light.rounded.h-100.p-4", [
-            m("ul.nav.nav-tabs.mb-3", {role: "tablist"},
+            m("ul.nav.nav-tabs.statistics-chart-tabs.mb-3", {role: "tablist"},
               tabs.map(function (tab) {
                 let isActive = tab.id === active.id;
                 return m("li.nav-item", {role: "presentation"},
@@ -558,7 +558,7 @@ class TableView {
     tds.push(m("td", total.roi_accepted));
     tds.push(m("td", total.roi_expected));
 
-    return m("tr.table-primary.fw-bold", tds);
+    return m("tr.statistics-total-row", tds);
   }
 
   view() {
@@ -594,7 +594,7 @@ class TableView {
             m("h6.mb-4", "Statistics"),
             m(
               "div.table-responsive",
-              m("table.table", [
+              m("table.table.statistics-table", [
                 m(
                   "thead",
                   m("tr", [
