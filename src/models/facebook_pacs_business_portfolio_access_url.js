@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+const session = require("./session");
 var config = require("../config");
 
 class FacebookPacsBusinessPortfolioAccessUrlModel {
@@ -64,6 +65,7 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
       body: payload,
     })
       .then(function () {
+        session.alerts.fetch().catch(function () {});
         this.successMessage = "Access URL created successfully.";
         setTimeout(function () {
           m.route.set(`/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls`);

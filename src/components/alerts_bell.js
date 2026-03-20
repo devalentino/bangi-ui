@@ -19,7 +19,11 @@ function severityClass(alerts) {
 }
 
 function alertIconClass(code) {
-  if (code === "facebook_pacs_business_portfolio_access_url_missing") {
+  if (
+      code === "facebook_pacs_business_portfolio_access_url_missing"
+      || code === "facebook_pacs_business_portfolio_access_url_expiring_soon"
+      || code === "facebook_pacs_business_portfolio_access_url_expired"
+  ) {
     return "fa fa-laptop";
   }
 
