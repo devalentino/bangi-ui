@@ -10,12 +10,14 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
     this.successMessage = null;
     this.form = {
       url: "",
+      email: "",
       expiresAt: "",
     };
   }
 
   resetForm() {
     this.form.url = "";
+    this.form.email = "";
     this.form.expiresAt = "";
   }
 
@@ -32,10 +34,16 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
   }
 
   buildPayload() {
-    return {
+    var payload = {
       url: this.form.url.trim(),
       expiresAt: this.form.expiresAt.trim(),
     };
+
+    if (this.form.email.trim()) {
+      payload.email = this.form.email.trim();
+    }
+
+    return payload;
   }
 
   save() {
