@@ -1,7 +1,7 @@
 const m = require("mithril");
-const AuthModel = require("./auth");
+const session = require("./session");
 
-const auth = new AuthModel();
+const auth = session.auth;
 
 function request(options) {
   if (!options || typeof options !== "object") {
@@ -16,4 +16,4 @@ function request(options) {
   return m.request(Object.assign({}, options, { headers: headers }));
 }
 
-module.exports = { request, auth };
+module.exports = { request };

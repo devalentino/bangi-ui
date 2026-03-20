@@ -63,6 +63,8 @@ class AuthModel {
     this.password = null;
     this.isAuthenticated = false;
     this.token = null;
+    this.onAuthenticated = null;
+    this.onSignedOut = null;
 
     var storedCredentials = loadStoredCredentials();
     if (storedCredentials) {
@@ -95,6 +97,9 @@ class AuthModel {
       .then(function () {
         this.isAuthenticated = true;
         persistCredentials(username, password);
+        if (typeof this.onAuthenticated === "function") {
+          this.onAuthenticated();
+        }
         m.route.set("");
       }.bind(this))
       .catch(function () {
@@ -112,6 +117,9 @@ class AuthModel {
     this.isAuthenticated = false;
     this.token = null;
     clearCredentials();
+    if (typeof this.onSignedOut === "function") {
+      this.onSignedOut();
+    }
     m.route.set("");
     alert("Signed out");
   }

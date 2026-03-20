@@ -2,6 +2,7 @@ var m = require("mithril");
 require("./styles/app.css");
 
 var api = require("./src/models/api");
+var session = require("./src/models/session");
 var AuthenticatedPage = require("./src/components/authenticated_page");
 var authView = require("./src/views/auth");
 var statisticsView = require("./src/views/statistics");
@@ -28,7 +29,8 @@ var facebookPacsCampaignView = require("./src/views/facebook_pacs_campaign");
 var facebookPacsBusinessPagesView = require("./src/views/facebook_pacs_business_pages");
 var facebookPacsBusinessPageView = require("./src/views/facebook_pacs_business_page");
 
-var auth = api.auth;
+var auth = session.auth;
+var alerts = session.alerts;
 
 m.route(document.getElementById("content"), "/statistics", {
   "/sign-in": {
@@ -48,7 +50,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: statisticsView, auth: auth });
+      return m(AuthenticatedPage, { page: statisticsView, auth: auth, alerts: alerts });
     },
   },
   "/reports/expenses": {
@@ -58,7 +60,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: expensesReportView, auth: auth });
+      return m(AuthenticatedPage, { page: expensesReportView, auth: auth, alerts: alerts });
     },
   },
   "/reports/leads": {
@@ -68,7 +70,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: reportsLeadsView, auth: auth });
+      return m(AuthenticatedPage, { page: reportsLeadsView, auth: auth, alerts: alerts });
     },
   },
   "/reports/leads/:clickId": {
@@ -78,7 +80,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: reportsLeadView, auth: auth });
+      return m(AuthenticatedPage, { page: reportsLeadView, auth: auth, alerts: alerts });
     },
   },
   "/core/campaigns": {
@@ -88,7 +90,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: coreCampaignsView, auth: auth });
+      return m(AuthenticatedPage, { page: coreCampaignsView, auth: auth, alerts: alerts });
     },
   },
   "/core/campaigns/:campaignId/flows/:flowId": {
@@ -98,7 +100,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: coreFlowView, auth: auth });
+      return m(AuthenticatedPage, { page: coreFlowView, auth: auth, alerts: alerts });
     },
   },
   "/core/campaigns/:campaignId": {
@@ -108,7 +110,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: coreCampaignView, auth: auth });
+      return m(AuthenticatedPage, { page: coreCampaignView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/executors": {
@@ -118,7 +120,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsExecutorsView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsExecutorsView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/executors/:executorId": {
@@ -128,7 +130,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsExecutorView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsExecutorView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/business-portfolios": {
@@ -138,7 +140,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfoliosView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfoliosView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/business-portfolios/:businessPortfolioId": {
@@ -148,7 +150,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfolioView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfolioView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/business-portfolios/:businessPortfolioId/access-urls": {
@@ -158,7 +160,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfolioAccessUrlsView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfolioAccessUrlsView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/business-portfolios/:businessPortfolioId/access-urls/new": {
@@ -168,7 +170,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfolioAccessUrlView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsBusinessPortfolioAccessUrlView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/ad-cabinets": {
@@ -178,7 +180,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsAdCabinetsView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsAdCabinetsView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/ad-cabinets/:adCabinetId": {
@@ -188,7 +190,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsAdCabinetView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsAdCabinetView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/campaigns": {
@@ -198,7 +200,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsCampaignsView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsCampaignsView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/campaigns/:campaignId": {
@@ -208,7 +210,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsCampaignView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsCampaignView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/business-pages": {
@@ -218,7 +220,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsBusinessPagesView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsBusinessPagesView, auth: auth, alerts: alerts });
     },
   },
   "/facebook/pacs/business-pages/:businessPageId": {
@@ -228,7 +230,7 @@ m.route(document.getElementById("content"), "/statistics", {
       }
     },
     render: function () {
-      return m(AuthenticatedPage, { page: facebookPacsBusinessPageView, auth: auth });
+      return m(AuthenticatedPage, { page: facebookPacsBusinessPageView, auth: auth, alerts: alerts });
     },
   },
 });
