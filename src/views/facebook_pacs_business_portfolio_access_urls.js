@@ -62,6 +62,7 @@ class FacebookPacsBusinessPortfolioAccessUrlsView {
                         m("tr", [
                           m("th", { scope: "col" }, "ID"),
                           m("th", { scope: "col" }, "URL"),
+                          m("th", { scope: "col" }, "Email"),
                           m("th", { scope: "col" }, "Expires At"),
                           m("th", { scope: "col" }, "Actions"),
                         ]),
@@ -72,7 +73,7 @@ class FacebookPacsBusinessPortfolioAccessUrlsView {
                           ? m("tr", [
                               m(
                                 "td.text-center",
-                                { colspan: 4 },
+                                { colspan: 5 },
                                 "No access URLs found.",
                               ),
                             ])
@@ -80,6 +81,7 @@ class FacebookPacsBusinessPortfolioAccessUrlsView {
                               return m("tr", [
                                 m("td", accessUrl.id),
                                 m("td", accessUrl.url),
+                                m("td", accessUrl.email || "-"),
                                 m("td", accessUrl.expiresAt),
                                 m(
                                   "td",

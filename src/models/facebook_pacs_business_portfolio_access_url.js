@@ -1,5 +1,6 @@
 const m = require("mithril");
 const api = require("./api");
+const session = require("./session");
 var config = require("../config");
 
 class FacebookPacsBusinessPortfolioAccessUrlModel {
@@ -10,12 +11,14 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
     this.successMessage = null;
     this.form = {
       url: "",
+      email: "",
       expiresAt: "",
     };
   }
 
   resetForm() {
     this.form.url = "";
+    this.form.email = "";
     this.form.expiresAt = "";
   }
 
@@ -32,10 +35,16 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
   }
 
   buildPayload() {
-    return {
+    var payload = {
       url: this.form.url.trim(),
       expiresAt: this.form.expiresAt.trim(),
     };
+
+    if (this.form.email.trim()) {
+      payload.email = this.form.email.trim();
+    }
+
+    return payload;
   }
 
   save() {
@@ -56,6 +65,7 @@ class FacebookPacsBusinessPortfolioAccessUrlModel {
       body: payload,
     })
       .then(function () {
+        session.alerts.fetch().catch(function () {});
         this.successMessage = "Access URL created successfully.";
         setTimeout(function () {
           m.route.set(`/facebook/pacs/business-portfolios/${this.businessPortfolioId}/access-urls`);

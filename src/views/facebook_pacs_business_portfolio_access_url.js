@@ -48,6 +48,18 @@ class FacebookPacsBusinessPortfolioAccessUrlView {
                   }),
                 ]),
                 m(".mb-3", [
+                  m("label.form-label", { for: "accessUrlEmail" }, "Email"),
+                  m("input.form-control", {
+                    type: "email",
+                    id: "accessUrlEmail",
+                    placeholder: "name@example.com",
+                    value: this.model.form.email,
+                    oninput: function (event) {
+                      this.model.form.email = event.target.value;
+                    }.bind(this),
+                  }),
+                ]),
+                m(".mb-3", [
                   m(
                     "label.form-label",
                     { for: "expiresAt" },

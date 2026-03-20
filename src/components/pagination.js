@@ -11,6 +11,8 @@ class Pagination {
 
   view(vnode) {
     let pagination = vnode.attrs.pagination;
+    if (pagination.total === 0) return null;
+
     let page = pagination.page;
     let totalPages = Math.ceil(pagination.total / pagination.pageSize);
 

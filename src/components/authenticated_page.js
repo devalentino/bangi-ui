@@ -8,7 +8,7 @@ class AuthenticatedPage {
       m(Sidebar),
       m(
         ".content",
-        [m(Navbar, { auth: vnode.attrs.auth }), m(vnode.attrs.page)],
+        [m(Navbar, { auth: vnode.attrs.auth, alerts: vnode.attrs.alerts }), m(vnode.attrs.page)],
       ),
     ];
   }
