@@ -14,6 +14,14 @@ class FacebookPacsBusinessPortfolioAccessUrlsView {
     this.model.fetch();
   }
 
+  shortenUrl(url) {
+    if (!url || url.length <= 60) {
+      return url;
+    }
+
+    return `${url.slice(0, 60)}...`;
+  }
+
   handleDelete(accessUrlId) {
     if (!window.confirm("Delete this access URL?")) {
       return;
@@ -60,11 +68,10 @@ class FacebookPacsBusinessPortfolioAccessUrlsView {
                       m(
                         "thead",
                         m("tr", [
-                          m("th", { scope: "col" }, "ID"),
                           m("th", { scope: "col" }, "URL"),
                           m("th", { scope: "col" }, "Email"),
                           m("th", { scope: "col" }, "Expires At"),
-                          m("th", { scope: "col" }, "Actions"),
+                          m("th", { scope: "col" }, ""),
                         ]),
                       ),
                       m(
@@ -73,27 +80,49 @@ class FacebookPacsBusinessPortfolioAccessUrlsView {
                           ? m("tr", [
                               m(
                                 "td.text-center",
-                                { colspan: 5 },
+                                { colspan: 4 },
                                 "No access URLs found.",
                               ),
                             ])
                           : this.model.items.map(function (accessUrl) {
                               return m("tr", [
-                                m("td", accessUrl.id),
-                                m("td", accessUrl.url),
+                                m(
+                                  "td",
+                                  m(".d-flex.align-items-center.gap-2", [
+                                    m(
+                                      "span",
+                                      { title: accessUrl.url },
+                                      this.shortenUrl(accessUrl.url),
+                                    ),
+                                    m(
+                                      "button.btn.btn-link.btn-sm.p-0",
+                                      {
+                                        type: "button",
+                                        title: "Copy full URL",
+                                        "aria-label": "Copy full URL",
+                                        onclick: function () {
+                                            navigator.clipboard.writeText(accessUrl.url);
+                                        }.bind(this),
+                                      },
+                                      m("i", { class: "fa fa-copy" }),
+                                    ),
+                                  ]),
+                                ),
                                 m("td", accessUrl.email || "-"),
                                 m("td", accessUrl.expiresAt),
                                 m(
                                   "td",
                                   m(
-                                    "button.btn.btn-outline-danger.btn-sm",
+                                    "button.btn.btn-link.btn-sm.p-0.text-danger",
                                     {
                                       type: "button",
                                       onclick: function () {
                                         this.handleDelete(accessUrl.id);
                                       }.bind(this),
+                                      title: "Delete access URL",
+                                      "aria-label": "Delete access URL",
                                     },
-                                    "Delete",
+                                    m("i", { class: "fa fa-trash" }),
                                   ),
                                 ),
                               ]);
